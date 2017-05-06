@@ -5,11 +5,15 @@ cc.Class({
         GameData: {
             default: null,
             type: require('GameData')            
-        },       
+        },
         infos: {
             default: [],
             type: [cc.Label]
-        },                  
+        },                
+        driverHead: {
+            default: null,
+            type: cc.Node
+        },
     },
 
     // use this for initialization
@@ -17,7 +21,7 @@ cc.Class({
 
     },
 
-    showRobotInfo: function(event) {
+    showDriverInfo: function(event) {
         var self = this;
 
         if (!event.detail.show) {
@@ -28,22 +32,17 @@ cc.Class({
         self.node.opacity = 255;
 
         var robot = event.detail.robot;
+        // cc.log('robot.driverHead = ' + robot.driverHead);        
+        cc.loader.loadRes(robot.driverHead, cc.SpriteFrame, function (err, spriteFrame) {
+            self.driverHead.getComponent(cc.Sprite).spriteFrame = spriteFrame;
+        });
         var infosIndex = [
-            'NAME',
-            'LEVEL',
-            'MANEUVER',
-            'SPIRIT',
-            'STRENGTH',
-            'DEFENCE',
-            'SPEED',
-            'HP',
-            'HPMAX',
-            'EXP',
-            'EXPNEED',
+            'POST',
+            'DRIVER',
         ];
         for (var i = 0; i < self.infos.length; i++) {
             self.infos[i].string = self.GameData.getRobot(robot.id)[infosIndex[i]];
-        }
+        }                                                                                       
     },
 
     // called every frame, uncomment this function to activate update callback

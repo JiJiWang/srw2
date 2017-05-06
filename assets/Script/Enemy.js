@@ -2,72 +2,37 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
+        GameData: {
+            default: null,
+            type: require('GameData')            
+        },
         HPLabel: {
             default: null,
-            type: cc.Node
+            type: cc.Label
         },
         HPChange: {
             default: null,
-            type: cc.Node
+            type: cc.Label
         },
+        id: 0,
         robotName: '',
         driverName: '',
-        post: '',
-        driver: 0,
-        level: 0,
-        maneuver: 0,  
-        strength: 0,
-        defence: 0, 
-        speed: 0,
-        spirit: 0,
-        spiritMax: 0,
-        hp: 0,
-        hpMax: 0,
-        exp: 0,
-        expNeed: 0,
-        armOneName: '',
-        armTwoName: '',
-        armOneID: 0,
-        armOneRange: 0,
-        armOneHitRate: 0,
-        armOneStrengthSea: 0,
-        armOneStrengthLand: 0,
-        armOneStrengthAir: 0,
-        armTwoID: 0,
-        armTwoRange: 0,
-        armTwoHitRate: 0,
-        armTwoStrengthSea: 0,
-        armTwoStrengthLand: 0,
-        armTwoStrengthAir: 0,
         tilex: 0,
         tiley: 0,
     },
 
     // use this for initialization
     onLoad: function () {
-        this.GameData = this.getGameData();
         this.isSelected= false;
         this.isMoved = false;
         this.isAlive = true;
-        this.HPLabel.getComponent(cc.Label).string = this.hp;
+        this.HPLabel.string = this.getHp();
         this.node.on('GameControl:Move', function(event) {
             // cc.log('Robot Move');
             this.move(event);
         }.bind(this));
     },
 
-    getGameData: function() {
-        var root = cc.find('Canvas');
-        if (root) {
-            var gameData = root.getComponent('GameData');
-            return gameData;
-        }
-        else {
-            cc.log('root is null');
-            return null;
-        }
-    },
-    
     onCollisionEnter: function (other, self) {
         this.isSelected = true;
         // cc.log('this.isSelected = ' + this.isSelected );
@@ -100,8 +65,6 @@ cc.Class({
     },
     
     move: function (event) {
-        // var dx = (this.tilex - event.detail.x) * 16;
-        // var dy = (this.tiley - event.detail.y) * 16;
         var dx = (event.detail.x - this.tilex) * 16;
         var dy = (this.tiley - event.detail.y) * 16;
         this.tilex = event.detail.x;
@@ -117,33 +80,51 @@ cc.Class({
         var delay = cc.delayTime(0.2);
         var seq = cc.sequence(movex, movey, delay, callback);
         this.node.runAction(seq);
-        var followAction = cc.follow(this.node, cc.rect(0, 0, 320 * 2 - 100, 480));
+        var followAction = cc.follow(this.node, cc.rect(0, 0, 256 * 2 - 100, 240));
         event.detail.map.runAction(followAction);         
         this.isMoved = true;
     },
 
+    setHp: function(hp) {
+        this.GameData.setHp(this.id, hp);
+    },
+
+    getHp: function() {
+        return this.GameData.getHp(this.id);
+    },
+
+    getDefence: function() {
+        return this.GameData.getDefence(this.id);
+    },
+
+    getManeuver: function() {
+        return this.GameData.getManeuver(this.id);
+    },
+
+    getArm: function(i) {
+        return this.GameData.getRobotArm(this.id, i);
+    },
+
     injure: function(strength) {
         var self = this;
-        cc.log('before injure self.hp = ' + self.hp + 'arm.strength = ' + strength + 'self.defence = ' + self.defence);
-        var hp = self.hp - strength + self.defence;
+        var hp0 = self.getHp();
+        var defence = self.getDefence();
+        // cc.log('before injure self.hp = ' + hp0 + ', arm.strength = ' + strength + ', self.defence = ' + defence);
+        var hp = hp0 - strength + defence;
         var dhp = 0;
-        if (hp <= 0) {
-            self.hp = 0;
-            dhp = -self.hp;
-            // self.HPLabel.getComponent(cc.Label).string = self.hp;
-            self.HPChange.getComponent(cc.Label).string = -self.hp;
-            var fadeout = cc.fadeOut(0.5);
-            self.node.runAction(fadeout);
+        if (hp < 0) {
+            dhp = -hp0;
+            hp = 0;
+            self.setHp(hp);
+            self.HPChange.string = -hp0;
             self.isAlive = false;
-            cc.log('self.GameData = ' +  self.GameData);
-            self.GameData.enemysAvailableCount--;
-            // self.GameData.decEnemysAvailableCount();
+            var fadeout = cc.fadeOut(0.5);
+            self.node.runAction(fadeout);            
         }
         else {
-            dhp = hp - self.hp;
-            self.hp = hp;
-            // self.HPLabel.getComponent(cc.Label).string = self.hp;
-            self.HPChange.getComponent(cc.Label).string = dhp;
+            dhp = hp - hp0;
+            self.setHp(hp);
+            self.HPChange.string = dhp;
         }
         var moveBy1 = cc.moveBy(0.05, cc.p(0.3, 0.3));
         var moveBy2 = cc.moveBy(0.05, cc.p(-0.3, -0.3));
@@ -152,11 +133,11 @@ cc.Class({
         var fadeIn = cc.fadeIn(1.5).easing(cc.easeCubicActionIn());
         var fadeout = cc.fadeOut(1.5).easing(cc.easeCubicActionOut()); 
         var callback = cc.callFunc(function () {
-            self.HPLabel.getComponent(cc.Label).string = self.hp;
+            self.HPLabel.string = self.getHp();
         });
         var seq = cc.sequence(fadeIn, callback, fadeout);
-        self.HPChange.runAction(seq);        
-        cc.log('after injure self.hp = ' + self.hp + 'dhp = ' + dhp);
+        self.HPChange.node.runAction(seq);        
+        // cc.log('after injure self.hp = ' + self.getHp() + ', dhp = ' + dhp);
     },
 
     // called every frame, uncomment this function to activate update callback

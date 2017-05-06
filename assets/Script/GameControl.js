@@ -1,20 +1,12 @@
-var GameData = require('GameData');
+// var GameData = require('GameData');
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({
         GameData: {
             default: null,
-            type: GameData            
+            type: require('GameData')            
         },  
-        gameStart: {
-            default: null,
-            type: cc.Node
-        },
-        map: {
-            default: [],
-            type: [cc.Node]
-        },
         gameSelector:{
             default: null,
             type: cc.Node
@@ -31,40 +23,37 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        robots: {
-            default: [],
-            type: [cc.Node]
-        },
-        enemys: {
-            default: [],
-            type: [cc.Node]            
-        },
+        // robots: {
+        //     default: [],
+        //     type: [cc.Node]
+        // },
+        // enemys: {
+        //     default: [],
+        //     type: [cc.Node]            
+        // },
         armInfo: {
             default: null,
-            type: cc.Node
+            type: require('ArmInfo')
         },
-    },
+    }),
 
     // use this for initialization
     onLoad: function () {
         this.isFixed = true;
-        this.GameData = this.node.getComponent('GameData');
-        this.GameData.cacheEnemys(this.enemys);
-        this.GameData.cacheRobots(this.robots);
+        // this.GameData = this.node.getComponent('GameData');
+        // this.GameData.cacheEnemys(this.enemys);
+        // this.GameData.cacheRobots(this.robots);
         this.GameData.roundReset();
         var manager = cc.director.getCollisionManager();
         manager.enabled = true;
-        this.level = 0;
         this.gameState = this.GameData.GameState.GAME_START;
         this.selectingRobot = null;
         this.selectingEnemy = null;
         this.node.on('GameStart:Start', function(event) {
-            cc.log('GameStart');
-            // this.gameStart.destroy();
-            // this.gameStart.stopAllActions();
-            this.gameStart.active = false;
+            // cc.log('GameStart');
+            this.GameData.gameStart.node.destroy();
             this.gameState = this.GameData.GameState.NONE;
-            this.map[this.level].active = true;
+            this.GameData.map.active = true;
             this.gameSelector.active = true;
             this.unfixed();                
         }.bind(this));
@@ -166,10 +155,10 @@ cc.Class({
                 // cc.log('onKeyKReleased:this.gameState.SHOW_GAME_MENU');
                 break;            
             case self.GameData.GameState.MOVE_ROBOT:
-                self.map[self.level].emit('GameControl:ShowRange', {
+                self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
                     y: self.selectingRobot.tiley,
-                    maneuver: self.selectingRobot.maneuver,
+                    maneuver: self.selectingRobot.getManeuver(),
                     show: false,
                 });             
                 if (self.selectingRobot.isSelected) {
@@ -195,7 +184,7 @@ cc.Class({
                 // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break;   
             case self.GameData.GameState.SHOW_ARM_INFO:
-                self.armInfo.emit('GameControl:ShowArmInfo', {
+                self.armInfo.node.emit('GameControl:ShowArmInfo', {
                     robot: self.selectingRobot,
                     show: false,
                 });                    
@@ -209,14 +198,15 @@ cc.Class({
                 // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break; 
             case self.GameData.GameState.SELECT_ARM:
-                var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
-                self.map[self.level].emit('GameControl:ShowRange', {
+                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
+                var arm = self.armInfo.getArm();
+                self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
                     y: self.selectingRobot.tiley,
-                    maneuver: arm.hitRange,
+                    maneuver: arm.RANGE,
                     show: false,
                 });
-                self.armInfo.emit('GameControl:ShowArmInfo', {
+                self.armInfo.node.emit('GameControl:ShowArmInfo', {
                     robot: self.selectingRobot,
                     show: false,
                 });
@@ -230,11 +220,12 @@ cc.Class({
                 // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break;
             case self.GameData.GameState.ATTACK:
-                var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
-                self.map[self.level].emit('GameControl:ShowRange', {
+                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
+                var arm = self.armInfo.getArm();
+                self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
                     y: self.selectingRobot.tiley,
-                    maneuver: arm.hitRange,
+                    maneuver: arm.RANGE,
                     show: false,
                 });
                 self.gameSelector.emit('GameControl:Unfixed');
@@ -270,10 +261,18 @@ cc.Class({
             case self.GameData.GameState.SELECTING_ROBOT:    
                 if (self.selectingRobot.isSelected) {
                     if (!self.selectingRobot.isMoved) {
-                        var menu = [
-                            [self.GameData.MenuID.MOVE, self.GameData.MenuID.INFO, self.GameData.MenuID.NONE],
-                            [self.GameData.MenuID.ATTACK, self.GameData.MenuID.ARM, self.GameData.MenuID.NONE]
-                        ];                    
+                        if (self.isAttackable(self.selectingRobot, self.GameData.enemys)) {
+                            var menu = [
+                                [self.GameData.MenuID.MOVE, self.GameData.MenuID.INFO, self.GameData.MenuID.NONE],
+                                [self.GameData.MenuID.ATTACK, self.GameData.MenuID.ARM, self.GameData.MenuID.NONE]
+                            ]; 
+                        }
+                        else {
+                            var menu = [
+                                [self.GameData.MenuID.MOVE, self.GameData.MenuID.INFO, self.GameData.MenuID.NONE],
+                                [self.GameData.MenuID.ARM, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE]
+                            ];                             
+                        }                   
                         self.robotMenu.emit('GameControl:ShowRobotMenu', {
                             robot: self.selectingRobot,
                             show: true,
@@ -315,10 +314,10 @@ cc.Class({
                         // var map = self.map[self.level];
                         self.gameSelector.emit('GameControl:Unfixed');            
                         if (!self.selectingRobot.isMoved) {
-                            self.map[self.level].emit('GameControl:ShowRange', {
+                            self.GameData.map.emit('GameControl:ShowRange', {
                                 x: self.selectingRobot.tilex,
                                 y: self.selectingRobot.tiley,
-                                maneuver: self.selectingRobot.maneuver,
+                                maneuver: self.selectingRobot.getManeuver(),
                                 show: true,
                             });        
                             self.gameState = self.GameData.GameState.MOVE_ROBOT;  
@@ -333,7 +332,7 @@ cc.Class({
                         self.gameState = self.GameData.GameState.SHOW_ROBOT_INFO;              
                         break;
                     case self.GameData.MenuID.ATTACK:
-                        self.armInfo.emit('GameControl:ShowArmInfo', {
+                        self.armInfo.node.emit('GameControl:ShowArmInfo', {
                             robot: self.selectingRobot,
                             show: true,
                         });                    
@@ -341,7 +340,7 @@ cc.Class({
                         self.gameState = self.GameData.GameState.SELECT_ARM;                 
                         break;
                     case self.GameData.MenuID.ARM:
-                        self.armInfo.emit('GameControl:ShowArmInfo', {
+                        self.armInfo.node.emit('GameControl:ShowArmInfo', {
                             robot: self.selectingRobot,
                             show: true,
                         });                    
@@ -375,10 +374,10 @@ cc.Class({
             case self.GameData.GameState.MOVE_ROBOT:
                 var gameSelector = self.gameSelector.getComponent('GameSelector');
                 if (self.isMoveable(self.selectingRobot, gameSelector)) {
-                    self.map[self.level].emit('GameControl:ShowRange', {
+                    self.GameData.map.emit('GameControl:ShowRange', {
                         x: self.selectingRobot.tilex,
                         y: self.selectingRobot.tiley,
-                        maneuver: self.selectingRobot.maneuver,
+                        maneuver: self.selectingRobot.getManeuver(),
                         show: false,
                     });  
                     self.selectingRobot.node.emit('GameControl:Move', {
@@ -399,14 +398,15 @@ cc.Class({
                 // cc.log('onKeyJReleased:this.gameState.SHOW_ARM_INFO');
                 break;  
             case self.GameData.GameState.SELECT_ARM:
-                var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
-                self.map[self.level].emit('GameControl:ShowRange', {
+                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
+                var arm = self.armInfo.getArm();
+                self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
                     y: self.selectingRobot.tiley,
-                    maneuver: arm.hitRange,
+                    maneuver: arm.RANGE,
                     show: true,
                 });
-                self.armInfo.emit('GameControl:ShowArmInfo', {
+                self.armInfo.node.emit('GameControl:ShowArmInfo', {
                     robot: self.selectingRobot,
                     show: false,
                 });
@@ -416,13 +416,14 @@ cc.Class({
                 break;                                      
             case self.GameData.GameState.ATTACK:  
                 var gameSelector = self.gameSelector.getComponent('GameSelector');
-                var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
+                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
+                var arm = self.armInfo.getArm();
                 var isAttackedSuc = self.attack(self.selectingRobot, self.GameData.enemys, arm, gameSelector);
                 if (isAttackedSuc) {
-                    self.map[self.level].emit('GameControl:ShowRange', {
+                    self.GameData.map.emit('GameControl:ShowRange', {
                         x: self.selectingRobot.tilex,
                         y: self.selectingRobot.tiley,
-                        maneuver: arm.hitRange,
+                        maneuver: arm.RANGE,
                         show: false,
                     });  
                     self.selectingRobot.node.color = new cc.Color(160, 160, 160);
@@ -446,10 +447,12 @@ cc.Class({
                 var dy = Math.abs(enemy.tiley - robot.tiley);
                 var ds = dx + dy;
                 // cc.log('ds = ' + ds);
-                if (robot.armOneRange >= ds) {
+                var arm1 = robot.getArm(0);
+                if (arm1.RANGE >= ds) {
                     return true;
                 }
-                if (robot.armTwoRange >= ds) {
+                var arm2 = robot.getArm(1);
+                if (arm2.RANGE >= ds) {
                     return true;
                 }     
             }       
@@ -463,21 +466,21 @@ cc.Class({
         var ds = dx + dy;
         // cc.log('dx = ' + dx + ' , dy = ' + dy);                
         // cc.log('gameSelector.tilex = ' + gameSelector.tilex + ' , gameSelector.tiley = ' + gameSelector.tiley);   
-        if (ds > 0 && ds <= robot.maneuver) {
+        if (ds > 0 && ds <= robot.getManeuver()) {
             return true;
         } 
         return false;         
     },
 
     attack: function(robot, enemys, arm, gameSelector) {
-        cc.log('gameSelector.tilex = ' + gameSelector.tilex + ', gameSelector.tiley = ' + gameSelector.tiley);
+        // cc.log('gameSelector.tilex = ' + gameSelector.tilex + ', gameSelector.tiley = ' + gameSelector.tiley);
         for (var i = 0; i < enemys.length; i++) {
             // var enemy = enemys[i].getComponent('Enemy');
             var enemy = enemys[i];
             if (enemy.isAlive) {
-                cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
+                // cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
                 if (enemy.tilex == gameSelector.tilex && enemy.tiley == gameSelector.tiley) {
-                    enemy.injure(arm.strengthAir);
+                    enemy.injure(arm.AIR);
                     return true;
                 } 
             }           
@@ -525,9 +528,9 @@ cc.Class({
     roundReset: function() {
         var self = this;
         self.GameData.roundReset();
-        self.map[self.level].stopAllActions();
-        self.map[self.level].x = -32;
-        self.map[self.level].y = 120;
+        self.GameData.map.stopAllActions();
+        self.GameData.map.x = -32;
+        self.GameData.map.y = 120;
         // cc.log('all enemy is moved');
         self.gameSelector.x = 8;
         self.gameSelector.y = 0;
@@ -541,6 +544,7 @@ cc.Class({
     },
 
     roundOver: function() {
+        cc.log('GameControl:roundOver');
         var self = this;
         self.GameData.roundOver();
         self.gameSelector.emit('GameControl:Fixed');
@@ -558,14 +562,18 @@ cc.Class({
                 var dy = Math.abs(robot.tiley - enemy.tiley);
                 var ds = dx + dy;
                 // cc.log('ds = ' + ds);
-                if (enemy.armOneRange >= ds) {
-                    robot.injure(enemy.armOneStrengthAir);
+                var arm1 = enemy.getArm(0);
+                if (arm1.RANGE >= ds) {
+                    // robot.injure(enemy.armOneStrengthAir);
+                    robot.injure(arm1.AIR);
                     enemy.isMoved = true;
                     enemy.node.color = new cc.Color(160, 160, 160);
                     return true;
                 }
-                if (enemy.armTwoRange >= ds) {
-                    robot.injure(enemy.armTwoStrengthAir);
+                var arm2 = enemy.getArm(1);
+                if (arm2.RANGE >= ds) {
+                    // robot.injure(enemy.armTwoStrengthAir);
+                    robot.injure(arm2.AIR);
                     enemy.isMoved = true;
                     enemy.node.color = new cc.Color(160, 160, 160);
                     return true;
@@ -657,15 +665,15 @@ cc.Class({
             }
             for (var i = 0; i < isBlock.length; i++) {
                 if (!isBlock[i]) {
-                    var endx = closedRobot.tilex + this.GameData.SquarePos[i].x;
-                    var endy = closedRobot.tiley + this.GameData.SquarePos[i].y;
+                    var endx = closedRobot.tilex + self.GameData.SquarePos[i].x;
+                    var endy = closedRobot.tiley + self.GameData.SquarePos[i].y;
                     var dx = endx - enemy.tilex;
                     var dy = endy - enemy.tiley;
                     var dxa = Math.abs(endx - enemy.tilex);
                     var dya = Math.abs(endy - enemy.tiley);
                     var ds = dxa + dya;
-                    var dd = ds - enemy.maneuver;
-                    // cc.log('ds = ' + ds + ', enemy.maneuver = ' + enemy.maneuver + ', dd = ' + dd);
+                    var maneuver = enemy.getManeuver();
+                    var dd = ds - maneuver;
                     if (dd > 0) {
                         var sx = 0;
                         if (dx != 0) {
@@ -675,10 +683,9 @@ cc.Class({
                         if (dy != 0) {
                             sy = dy / dya;
                         }                    
-                        cc.log('sx = ' + sx + ', sy = ' + sy + ', enemy.maneuver = ' + enemy.maneuver);
+                        cc.log('sx = ' + sx + ', sy = ' + sy + ', enemy.maneuver = ' + maneuver);
                         cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
                         var pa = new Array();
-                        var maneuver = enemy.maneuver;
                         var tilex = enemy.tilex;
                         var tiley = enemy.tiley;
                         var index = 0;
@@ -768,7 +775,7 @@ cc.Class({
                     var seq = cc.sequence(movex, movey, delay, callback);
                     enemy.node.runAction(seq);
                     var followAction = cc.follow(enemy.node, cc.rect(0, 0, 320 * 2 - 100, 480));
-                    self.map[self.level].runAction(followAction);         
+                    self.GameData.map.runAction(followAction);         
                     enemy.isMoved = true;
                     return ;
                 }

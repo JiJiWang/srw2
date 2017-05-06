@@ -2,6 +2,14 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
+        GameData: {
+            default: null,
+            type: require('GameData')            
+        },
+        arms: {
+            default: [],
+            type: [cc.Node]
+        },
         selector: {
             default: null,
             type: cc.Node
@@ -9,7 +17,11 @@ cc.Class({
         pos: {
             default: [],
             type: [cc.Node]            
-        }
+        },
+        infos: {
+            default: [],
+            type: [cc.Label]
+        }, 
     },
 
     // use this for initialization
@@ -19,6 +31,7 @@ cc.Class({
         this.accUp = false;
         this.accDown = false;
         this.selectedID = 0;
+        this.armsID = [-1, -1];
         this.selectedArm = {
             hitRate: 0,
             hitRange: 0,
@@ -28,6 +41,7 @@ cc.Class({
         };
         this.node.on('GameControl:ShowArmInfo', function ( event ) {
             this.showArmInfo(event);
+            // this.unfixed(event.detail.robot);
         }.bind(this));      
         this.setInputControl();
     },
@@ -80,36 +94,8 @@ cc.Class({
                         self.selectedArm.strengthSea = robot.armTwoStrengthSea;
                         self.selector.x = self.pos[1].x;
                         self.selector.y = self.pos[1].y;
-                        // var pos = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_POS_ARM_2');
-                        // if (pos) {
-                        //     self.selector.x = pos.x;
-                        //     self.selector.y = pos.y;
-                        // }                        
-                        var armOneHitRate = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RATE');
-                        if (armOneHitRate) {
-                            // cc.log('find armOneHitRate');
-                            armOneHitRate.getComponent(cc.Label).string = robot.armTwoHitRate;
-                        }   
-                        var armOneRange = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RANGE');
-                        if (armOneRange) {
-                            // cc.log('find armOneRange');
-                            armOneRange.getComponent(cc.Label).string = robot.armTwoRange;
-                        } 
-                        var armOneStrengthAir = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_AIR');
-                        if (armOneStrengthAir) {
-                            // cc.log('find armOneStrengthAir');
-                            armOneStrengthAir.getComponent(cc.Label).string = robot.armTwoStrengthAir;
-                        }   
-                        var armOneStrengthLand = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_LAND');
-                        if (armOneStrengthLand) {
-                            // cc.log('find armOneStrengthLand');
-                            armOneStrengthLand.getComponent(cc.Label).string = robot.armTwoStrengthLand;
-                        }  
-                        var armOneStrengthSea = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_SEA');
-                        if (armOneStrengthSea) {
-                            // cc.log('find armOneStrengthSea');
-                            armOneStrengthSea.getComponent(cc.Label).string = robot.armTwoStrengthSea;
-                        }
+                        self.arms[0].opacity = 0;
+                        self.arms[1].opacity = 255;
                         self.isMoved = true;                             
                     }
                 } else if (self.accUp) {
@@ -123,36 +109,8 @@ cc.Class({
                         self.selectedArm.strengthSea = robot.armOneStrengthLand;
                         self.selector.x = self.pos[0].x;
                         self.selector.y = self.pos[0].y;                        
-                        // var pos = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_POS_ARM_1');
-                        // if (pos) {
-                        //     self.selector.x = pos.x;
-                        //     self.selector.y = pos.y;
-                        // }
-                        var armOneHitRate = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RATE');
-                        if (armOneHitRate) {
-                            // cc.log('find armOneHitRate');
-                            armOneHitRate.getComponent(cc.Label).string = robot.armOneHitRate;
-                        }   
-                        var armOneRange = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RANGE');
-                        if (armOneRange) {
-                            // cc.log('find armOneRange');
-                            armOneRange.getComponent(cc.Label).string = robot.armOneRange;
-                        } 
-                        var armOneStrengthAir = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_AIR');
-                        if (armOneStrengthAir) {
-                            // cc.log('find armOneStrengthAir');
-                            armOneStrengthAir.getComponent(cc.Label).string = robot.armOneStrengthAir;
-                        }   
-                        var armOneStrengthLand = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_LAND');
-                        if (armOneStrengthLand) {
-                            // cc.log('find armOneStrengthLand');
-                            armOneStrengthLand.getComponent(cc.Label).string = robot.armOneStrengthLand;
-                        }  
-                        var armOneStrengthSea = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_SEA');
-                        if (armOneStrengthSea) {
-                            // cc.log('find armOneStrengthSea');
-                            armOneStrengthSea.getComponent(cc.Label).string = robot.armOneStrengthSea;
-                        }
+                        self.arms[0].opacity = 255;
+                        self.arms[1].opacity = 0;
                         self.isMoved = false;                             
                     }    
                 }
@@ -169,58 +127,45 @@ cc.Class({
             self.node.stopAllActions();
             self.selectedID = 0;
             self.selector.x = self.pos[0].x;
-            self.selector.y = self.pos[0].y;              
+            self.selector.y = self.pos[0].y;             
             self.isFixed = true;
         }
     },
 
     showArmInfo: function(event) {
+        var self = this;
         if (!event.detail.show) {
-            this.node.opacity = 0;
-            this.fixed();
+            self.node.opacity = 0;
+            self.fixed();
             return;
         }
-        // cc.log('ShowArmInfo');
-        var self = this;
         self.node.opacity = 255;
         var robot = event.detail.robot;
         self.unfixed(robot);
 
-        var armOneName = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_ARM_NAME_1');
-        if (armOneName) {
-            // cc.log('find armOneName');
-            armOneName.getComponent(cc.Label).string = robot.armOneName;
-        }  
-        var armTwoName = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_ARM_NAME_2');
-        if (armTwoName) {
-            // cc.log('find armTwoName');
-            armTwoName.getComponent(cc.Label).string = robot.armTwoName;
-        }  
-        var armOneHitRate = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RATE');
-        if (armOneHitRate) {
-            // cc.log('find armOneHitRate');
-            armOneHitRate.getComponent(cc.Label).string = robot.armOneHitRate;
-        }   
-        var armOneRange = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_HIT_RANGE');
-        if (armOneRange) {
-            // cc.log('find armOneRange');
-            armOneRange.getComponent(cc.Label).string = robot.armOneRange;
-        } 
-        var armOneStrengthAir = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_AIR');
-        if (armOneStrengthAir) {
-            // cc.log('find armOneStrengthAir');
-            armOneStrengthAir.getComponent(cc.Label).string = robot.armOneStrengthAir;
-        }   
-        var armOneStrengthLand = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_LAND');
-        if (armOneStrengthLand) {
-            // cc.log('find armOneStrengthLand');
-            armOneStrengthLand.getComponent(cc.Label).string = robot.armOneStrengthLand;
-        }  
-        var armOneStrengthSea = cc.find('Canvas/KW_UI_PANEL_ARM_INFO/KW_UI_TEXT_STRENGTH_SEA');
-        if (armOneStrengthSea) {
-            // cc.log('find armOneStrengthSea');
-            armOneStrengthSea.getComponent(cc.Label).string = robot.armOneStrengthSea;
-        }                                                                                           
+        var infosIndex = [
+            'NAME',
+            'RATE',
+            'RANGE',
+            'AIR',
+            'LAND',
+            'SEA',
+        ];
+        var j = 0;
+        var armsID = self.GameData.getArmsID(robot.id);
+        for (var k = 0; k < armsID.length; k++) {
+            var id = armsID[k];
+            self.armsID[k] = id;
+            var arm = self.GameData.getArm(id);
+            for (var i = 0; i < infosIndex.length; i++) {
+                self.infos[j].string = arm[infosIndex[i]];
+                j++;
+            }
+        }                                                                                       
+    },
+
+    getArm: function() {
+        return this.GameData.getArm(this.armsID[this.selectedID]);
     },
 
     // called every frame, uncomment this function to activate update callback

@@ -1,9 +1,26 @@
+// var GameStart = require('GameStart');
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({
         KeySensibility: 0,
-    },
+        gameStart: {
+            default: null,
+            type: require("GameStart")
+        },
+        tiledMaps: {
+            default: [],
+            type: [cc.Node]
+        },
+        robots: {
+            default: [],
+            type: [require("Robot")]
+        },
+        enemys: {
+            default: [],
+            type: [require("Enemy")]            
+        },
+    }),
 
     // use this for initialization
     onLoad: function () {
@@ -11,6 +28,8 @@ cc.Class({
         this.cancle = false;
         this.down = false;
         this.up = false;
+        this.level = 0;
+        this.map = this.tiledMaps[this.level];
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);
         this.MenuID = cc.Enum({
             NONE: 0,
@@ -58,8 +77,6 @@ cc.Class({
         });
         this.round = 0;
         this.gold = 1000;
-        this.enemys = new Array();
-        this.robots = new Array();
         this.enemysAliveCount = 0;
         this.robotsAliveCount = 0;
         this.enemysAvailableCount = 0;
@@ -85,102 +102,130 @@ cc.Class({
                 ID: 0,
                 NAME: '粒子炮',
                 RATE: 95,
-                RANGE: 4,
-                DAMAGE: [150, 150, 0],             
+                RANGE: 20,
+                AIR: 150,                                                                                                                                              
+                LAND: 150,                                                                                                                                              
+                SEA: 0,                            
             },
             {
                 ID: 1,
                 NAME: '20机枪',
                 RATE: 120,
                 RANGE: 1,
-                DAMAGE: [90, 90, 90],             
+                AIR: 90,                                                                                                                                              
+                LAND: 90,                                                                                                                                              
+                SEA: 90,                           
             },
             {
                 ID: 2,
                 NAME: '导弹',
                 RATE: 90,
                 RANGE: 4,
-                DAMAGE: [118, 118, 118],                            
+                AIR: 118,                                                                                                                                              
+                LAND: 118,                                                                                                                                              
+                SEA: 118,                                        
             },
             {
                 ID: 3,
-                NAME: '修理装置',
+                NAME: '远程导弹',
                 RATE: 0,
                 RANGE: 1,
-                DAMAGE: [100, 100, 100],                                           
+                AIR: 100,                                                                                                                                              
+                LAND: 100,                                                                                                                                              
+                SEA: 100,                                                         
             },            
             {
                 ID: 4,
                 NAME: '穿甲弹',
                 RATE: 84,
                 RANGE: 1,
-                DAMAGE: [135, 135, 115],                                                         
+                AIR: 135,                                                                                                                                              
+                LAND: 135,                                                                                                                                              
+                SEA: 115,                                                                        
             },
             {
                 ID: 5,
                 NAME: '光子射线',
                 RATE: 115,
                 RANGE: 1,
-                DAMAGE: [115, 115, 0],                                                                       
+                AIR: 115,                                                                                                                                              
+                LAND: 115,                                                                                                                                              
+                SEA: 0,                                                                                     
             },
             {
                 ID: 6,
                 NAME: '盖塔战斧',
                 RATE: 110,
                 RANGE: 1,
-                DAMAGE: [140, 110, 0],                                                                                      
+                AIR: 140,                                                                                                                                              
+                LAND: 110,                                                                                                                                              
+                SEA: 0,                                                                                                   
             },
             {
                 ID: 7,
                 NAME: '盖塔射线',
                 RATE: 80,
                 RANGE: 1,
-                DAMAGE: [160, 155, 0],                                                                                                    
+                AIR: 160,                                                                                                                                              
+                LAND: 155,                                                                                                                                              
+                SEA: 0,                                                                                                                 
             }, 
             {
                 ID: 8,
                 NAME: '光剑',
                 RATE: 110,
                 RANGE: 1,
-                DAMAGE: [120, 120, 110],                                                                                                                   
+                AIR: 120,                                                                                                                                              
+                LAND: 120,                                                                                                                                              
+                SEA: 110,                                                                                                                                   
             },
             {
                 ID: 9,
                 NAME: '光束剑',
                 RATE: 85,
                 RANGE: 1,
-                DAMAGE: [140, 130, 0],                                                                                                                                  
+                AIR: 140,                                                                                                                                              
+                LAND: 130,                                                                                                                                              
+                SEA: 0,                                                                                                                                                 
             },  
             {
                 ID: 10,
                 NAME: '萨斯剑',
                 RATE: 100,
                 RANGE: 1,
-                DAMAGE: [115, 115, 115],                                                                                                                                                 
+                AIR: 115,                                                                                                                                              
+                LAND: 115,                                                                                                                                              
+                SEA: 115,                                                                                                                                              
             },
             {
                 ID: 11,
                 NAME: '左轮手枪',
                 RATE: 80,
                 RANGE: 1,
-                DAMAGE: [130, 130, 130],                                                                                                                                                                 
+                AIR: 130,                                                                                                                                              
+                LAND: 130,                                                                                                                                              
+                SEA: 130,                                                                                                                                                                                
             },
             {
                 ID: 12,
                 NAME: '三指叉',
                 RATE: 110,
                 RANGE: 1,
-                DAMAGE: [80, 80, 80],                                                                                                                                                                 
+                AIR: 80,                                                                                                                                              
+                LAND: 80,                                                                                                                                              
+                SEA: 80,                                                                                                                                                                              
             },
             {
                 ID: 13,
                 NAME: '连发枪',
                 RATE: 100,
                 RANGE: 1,
-                DAMAGE: [90, 90, 90],                                                                                                                                                                 
+                AIR: 90,                                                                                                                                              
+                LAND: 90,                                                                                                                                              
+                SEA: 90,                                                                                                                                                                                  
             },            
         ];
-        this.RobotInfo = [
+        this.Robot = [
             {
                 ID: 0,
                 NAME: '怀特',
@@ -306,7 +351,61 @@ cc.Class({
                 EXP: 0,
                 EXPNEED: 30,
                 ARM: [10, 11],
-            },                                                                    
+            },  
+            {
+                ID: 7,
+                NAME: '佐克',
+                DRIVER: '士兵',
+                POST: '驾驶员',
+                LEVEL: 1,
+                TYPE: this.RobotType.LAND,
+                MANEUVER: 4,
+                SPIRIT: 0,
+                STRENGTH: 40,
+                DEFENCE: 28,
+                SPEED: 55,
+                HP: 180,
+                HPMAX: 180,
+                EXP: 0,
+                EXPNEED: 30,
+                ARM: [10, 11],
+            }, 
+            {
+                ID: 8,
+                NAME: '佐克',
+                DRIVER: '士兵',
+                POST: '驾驶员',
+                LEVEL: 1,
+                TYPE: this.RobotType.LAND,
+                MANEUVER: 4,
+                SPIRIT: 0,
+                STRENGTH: 40,
+                DEFENCE: 28,
+                SPEED: 55,
+                HP: 180,
+                HPMAX: 180,
+                EXP: 0,
+                EXPNEED: 30,
+                ARM: [10, 11],
+            }, 
+            {
+                ID: 9,
+                NAME: '佐克',
+                DRIVER: '士兵',
+                POST: '驾驶员',
+                LEVEL: 1,
+                TYPE: this.RobotType.LAND,
+                MANEUVER: 4,
+                SPIRIT: 0,
+                STRENGTH: 40,
+                DEFENCE: 28,
+                SPEED: 55,
+                HP: 180,
+                HPMAX: 180,
+                EXP: 0,
+                EXPNEED: 30,
+                ARM: [10, 11],
+            },                                                                                                       
         ];
     },
 
@@ -314,18 +413,64 @@ cc.Class({
         cc.systemEvent.off(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);
     },
 
-    cacheEnemys: function (enemys) {
-        for (var i = 0; i < enemys.length; i++) {
-            this.enemys[i] =  enemys[i].getComponent('Enemy');
-        }
-        this.enemysAliveCount = enemys.length;         
+    getArm: function (id) {
+        return this.Arm[id];
     },
 
-    cacheRobots: function (robots) {
-        for (var i = 0; i < robots.length; i++) {
-            this.robots[i] =  robots[i].getComponent('Robot');
-        }   
-        this.robotsAliveCount = robots.length;           
+    getRobot: function (id) {
+        return this.Robot[id];
+    },
+
+    getRobotName: function (id) {
+        return this.Robot[id].NAME;
+    }, 
+
+    getLevel: function (id) {
+        return this.Robot[id].LEVEL;
+    },
+
+    getHp: function (id) {
+        return this.Robot[id].HP;
+    },  
+
+    getStrength: function (id) {
+        return this.Robot[id].STRENGTH;
+    }, 
+
+    getDefence: function (id) {
+        return this.Robot[id].DEFENCE;
+    }, 
+
+    getSpeedBy: function (id) {
+        return this.Robot[id].SPEED;
+    }, 
+
+    getManeuver: function (id) {
+        return this.Robot[id].MANEUVER;
+    },
+
+    getArmsID: function (id) {
+        return this.Robot[id].ARM;
+    },
+
+    getRobotArm: function (id, i) {
+        return this.Arm[this.Robot[id].ARM[i]];
+    },
+
+    getRound: function () {
+        return this.round;
+    },
+
+    getGold: function () {
+        return this.gold;
+    },
+
+    getKeySensibility: function () {
+        return this.KeySensibility;
+    },
+
+    setHp: function (id, v) {
+        this.Robot[id].HP = v;
     },
 
     roundReset: function() {
@@ -351,6 +496,7 @@ cc.Class({
     },
 
     roundOver: function() {
+        // cc.log('GameData:roundOver, this.name = ' + this.name);
         this.enemysAvailableCount = 0;
         var array = this.enemys;
         for (var i = 0; i < array.length; i++) {
@@ -359,6 +505,7 @@ cc.Class({
                 this.enemysAvailableCount++;
             }
         }
+        // cc.log('this.enemysAvailableCount = ' + this.enemysAvailableCount);
         var array = this.robots;
         for (var i = 0; i < array.length; i++) {
             var element = array[i];

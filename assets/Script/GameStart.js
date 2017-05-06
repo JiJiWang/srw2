@@ -1,11 +1,11 @@
-var GameData = require('GameData');
+// var GameData = require('GameData');
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({
         GameData: {
             default: null,
-            type: GameData            
+            type: require('GameData')            
         },           
         title: {
             default: [],
@@ -26,8 +26,8 @@ cc.Class({
         titleMusic: {
             default: null,
             url: cc.AudioClip                 
-        },
-    },
+        },        
+    }),
 
     onLoad: function () {
         this.isFixed = true;
@@ -94,6 +94,10 @@ cc.Class({
         this.node.runAction(sequence);
     },
 
+    onDestroy () {
+        // cc.log('GameStart:onDestroy');
+    },
+
     unfixed: function() {
         var self = this;
         if (self.isFixed) {
@@ -121,20 +125,11 @@ cc.Class({
                     self.GameData.up = false;
                 }
                 if (self.GameData.ok) {
-                    cc.log('self.menuID = ' + self.menuID);
+                    // cc.log('self.menuID = ' + self.menuID);
                     switch (self.menuID) {
                         case self.MenuID.START:
-                            // cc.director.loadScene('Level1');
-                            // self.node.active = false;
-                            // cc.log('before require');
-                            // var GameControl = require('GameControl');
-                            // if (typeof GameControl == 'undefined') {
-                            //     cc.log('typeof GameControl = undefined');
-                            // }
                             var root = cc.find('Canvas');
                             root.emit('GameStart:Start');
-                            // cc.log('GameStart');
-                            // GameControl.node.emit('GameStart:Start');
                             break;
                         case self.MenuID.CONTINUE:
                             self.talk.getComponent(cc.Label).string = 'Current version does not support archiving'; 

@@ -2,6 +2,10 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
+        GameData: {
+            default: null,
+            type: require('GameData')            
+        },   
         selector: {
             default: null,
             type: cc.Node
@@ -13,15 +17,23 @@ cc.Class({
         gameInfo: {
             default: null,
             type: cc.Node            
+        },
+        infos: {
+            default: [],
+            type: [cc.Label]
+        }, 
+        round: {
+            default: null,
+            type: cc.Label              
+        }, 
+        gold: {
+            default: null,
+            type: cc.Label              
         },        
     },
 
     // use this for initialization
     onLoad: function () {
-        var root = cc.find('Canvas');
-        if (root) {
-            this.GameData = root.getComponent('GameData');
-        }
         this.menux = 1;
         this.menuy = 1;
         this.isExist = [
@@ -98,7 +110,7 @@ cc.Class({
         var self = this;
         if (self.isFixed) {
             // cc.log('self.keySensibility = ' + self.keySensibility);
-            var interval = cc.delayTime(self.keySensibility);
+            var interval = cc.delayTime(self.GameData.getKeySensibility());
             var callback = cc.callFunc(function () {
                 if (self.accLeft) {
                     self.moveSelector(-1, 0);
@@ -131,8 +143,8 @@ cc.Class({
         var self = this;
         var menux = self.menux + dx;
         var menuy = self.menuy + dy;
-        // cc.log('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_POS_MENU_' + menux + '_' + menuy);
-        var findnode = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_POS_MENU_' + menux + '_' + menuy);
+        // cc.log('KW_UI_POS_MENU_' + menux + '_' + menuy, self.node);
+        var findnode = cc.find('KW_UI_POS_MENU_' + menux + '_' + menuy, self.node);
         if (findnode && self.isExist[menux - 1][menuy - 1]) {
             // cc.log('isExist[' + (menux - 1) + '][' + (menuy - 1) + '] = ' + self.isExist[menux - 1][menuy - 1]);
             self.selector.x = findnode.x;
@@ -150,53 +162,35 @@ cc.Class({
     },
 
     showRobotMenu: function(event) {
+        var self = this;
         if (!event.detail.show) {
-            this.node.opacity = 0;
-            this.fixed();
+            self.node.opacity = 0;
+            self.fixed();
             return;
         }
-        // cc.log('showRobotMenu');
-        var self = this;
         self.node.opacity = 255;
         var robot = event.detail.robot;
-        this.unfixed();
-        // cc.log(robot.robotName);
-        // cc.log('robot = ' + robot);
-        // cc.log('event.detail.robotsIndex = ' + event.detail.robotsIndex);
+        self.unfixed();
         if (event.detail.flag) {
-            self.robotInfo.opacity = 255;           
-            var name = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_PANEL_ROBOT_INFO/KW_UI_TEXT_ROBOT_NAME');
-            if (name) {
-                // cc.log('find name');
-                name.getComponent(cc.Label).string = robot.robotName;
-            }
-            var hp = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_PANEL_ROBOT_INFO/KW_UI_TEXT_ROBOT_HP');
-            if (hp) {
-                // cc.log('find hp');
-                hp.getComponent(cc.Label).string = robot.hp + '/' + robot.hpMax;
-            }
-            var level = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_PANEL_ROBOT_INFO/KW_UI_TEXT_ROBOT_LEVEL');
-            if (level) {
-                // cc.log('find level');
-                level.getComponent(cc.Label).string = robot.level;
-            }
+            self.robotInfo.opacity = 255; 
+            var infosIndex = [
+                'NAME',
+                'HP',
+                'HPMAX',
+                'LEVEL',
+            ];
+            for (var i = 0; i < self.infos.length; i++) {
+                self.infos[i].string = self.GameData.getRobot(robot.id)[infosIndex[i]];
+            }                      
         }
         else {
             self.gameInfo.opacity = 255;
-            var round = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_PANEL_GAME_INFO/KW_UI_TEXT_ROUND_NUM');
-            if (round) {
-                // cc.log('find round');
-                round.getComponent(cc.Label).string = self.GameData.round;
-            }
-            var gold = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_PANEL_GAME_INFO/KW_UI_TEXT_GOLD');
-            if (gold) {
-                // cc.log('find gold');
-                gold.getComponent(cc.Label).string = self.GameData.gold + 'G';
-            }            
+            self.round.string = self.GameData.getRound();
+            self.gold.string = self.GameData.getGold() + 'G';          
         }
         for (var i = 0; i < 2; i++) {
             for (var j = 0; j < 3; j++) {
-                var menu = cc.find('Canvas/KW_UI_PANEL_ROBOT_MENU/KW_UI_TEXT_MENU_' + (i + 1) + '_' + (j + 1));
+                var menu = cc.find('KW_UI_TEXT_MENU_' + (i + 1) + '_' + (j + 1), self.node);
                 if (menu) {
                     // cc.log('find menu_' + (i + 1) + '_' + (j + 1) + ' , menu text = ' + event.detail.menu[i][j]);
                     menu.getComponent(cc.Label).string = self.GameData.MenuName[event.detail.menu[i][j]];
@@ -207,7 +201,7 @@ cc.Class({
                 else {
                     self.isExist[i][j] = true;
                 }
-                this.menuID[i][j] = event.detail.menu[i][j];
+                self.menuID[i][j] = event.detail.menu[i][j];
             }
         }                
     },
