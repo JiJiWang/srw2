@@ -18,7 +18,7 @@ cc.Class({
         },
         enemys: {
             default: [],
-            type: [require("Enemy")]            
+            type: [require("Robot")]            
         },
     }),
 
@@ -26,11 +26,14 @@ cc.Class({
     onLoad: function () {
         this.ok = false;
         this.cancle = false;
+        this.left = false;
+        this.right = false;          
         this.down = false;
         this.up = false;
         this.level = 0;
         this.map = this.tiledMaps[this.level];
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);
+        cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
         this.MenuID = cc.Enum({
             NONE: 0,
             MOVE: 1,
@@ -63,18 +66,19 @@ cc.Class({
         ];
         this.GameState = cc.Enum({
             NONE: 0,
-            SELECTING_ROBOT: 1,
-            SHOW_ROBOT_MENU: 2,
-            SHOW_GAME_MENU: 3,
-            MOVE_ROBOT: 4,
-            SHOW_ROBOT_INFO: 5,
-            SHOW_ROBOT_SPIRIT: 6,
-            SELECT_ARM: 7,
-            SHOW_ARM_INFO: 8,
-            ATTACK: 9,
-            ENEMY_ACTION: 10,
-            GAME_START: 11,
-        });
+            GAME_START: 1,
+            SELECTING_ROBOT: 2,
+            SELECTING_ENEMY: 3,
+            SHOW_ROBOT_MENU: 4,
+            SHOW_GAME_MENU: 5,
+            MOVE_ROBOT: 6,
+            SHOW_ROBOT_INFO: 7,
+            SHOW_ROBOT_SPIRIT: 8,
+            SELECT_ARM: 9,
+            SHOW_ARM_INFO: 10,
+            ATTACK: 11,
+            ENEMY_ACTION: 12,
+        });       
         this.round = 0;
         this.gold = 1000;
         this.enemysAliveCount = 0;
@@ -350,7 +354,7 @@ cc.Class({
                 HPMAX: 180,
                 EXP: 0,
                 EXPNEED: 30,
-                ARM: [10, 11],
+                ARM: [12, 13],
             },  
             {
                 ID: 7,
@@ -368,7 +372,7 @@ cc.Class({
                 HPMAX: 180,
                 EXP: 0,
                 EXPNEED: 30,
-                ARM: [10, 11],
+                ARM: [12, 13],
             }, 
             {
                 ID: 8,
@@ -386,7 +390,7 @@ cc.Class({
                 HPMAX: 180,
                 EXP: 0,
                 EXPNEED: 30,
-                ARM: [10, 11],
+                ARM: [12, 13],
             }, 
             {
                 ID: 9,
@@ -404,14 +408,62 @@ cc.Class({
                 HPMAX: 180,
                 EXP: 0,
                 EXPNEED: 30,
-                ARM: [10, 11],
+                ARM: [12, 13],
             },                                                                                                       
         ];
     },
 
     onDestroy () {
         cc.systemEvent.off(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);
+        cc.systemEvent.off(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
     },
+
+
+    getGameState: function (gameState) {
+        var strGameState = '';
+        switch (gameState) {
+            case this.GameState.NONE: 
+                strGameState = 'NONE';
+                break;
+            case this.GameState.GAME_START: 
+                strGameState = 'GAME_START';
+                break;
+            case this.GameState.SELECTING_ROBOT: 
+                strGameState = 'SELECTING_ROBOT';
+                break;
+            case this.GameState.SELECTING_ENEMY: 
+                strGameState = 'SELECTING_ENEMY';
+                break;
+            case this.GameState.SHOW_ROBOT_MENU: 
+                strGameState = 'SHOW_ROBOT_MENU';
+                break;
+            case this.GameState.SHOW_GAME_MENU: 
+                strGameState = 'SHOW_GAME_MENU';
+                break;
+            case this.GameState.MOVE_ROBOT: 
+                strGameState = 'MOVE_ROBOT';
+                break;
+            case this.GameState.SHOW_ROBOT_INFO: 
+                strGameState = 'SHOW_ROBOT_INFO';
+                break;  
+            case this.GameState.SHOW_ROBOT_SPIRIT: 
+                strGameState = 'SHOW_ROBOT_SPIRIT';
+                break; 
+            case this.GameState.SELECT_ARM: 
+                strGameState = 'SELECT_ARM';
+                break;     
+            case this.GameState.SHOW_ARM_INFO: 
+                strGameState = 'SHOW_ARM_INFO';
+                break;    
+            case this.GameState.ATTACK: 
+                strGameState = 'ATTACK';
+                break; 
+            case this.GameState.ENEMY_ACTION: 
+                strGameState = 'ENEMY_ACTION';
+                break;                                                                                                                                                                                         
+        }
+        return strGameState;
+    }, 
 
     getArm: function (id) {
         return this.Arm[id];
@@ -515,10 +567,6 @@ cc.Class({
             }
         }         
     },
-
-    decEnemysAvailableCount: function() {
-        this.enemysAvailableCount--;
-    },
     
     // called every frame, uncomment this function to activate update callback
     // update: function (dt) {
@@ -528,11 +576,40 @@ cc.Class({
     onKeyUp: function (event) {
         switch(event.keyCode) {
             case cc.KEY.j:
+                this.ok = false;
+                break;
+            case cc.KEY.k:
+                this.cancle = false;
+                break;  
+            case cc.KEY.a:
+                this.left = false;
+                break;
+            case cc.KEY.d:
+                this.right = false;                
+                break;
+            case cc.KEY.s:
+                this.down = false;
+                break;
+            case cc.KEY.w:
+                this.up = false;
+                break;                
+        }
+    },
+
+    onKeyDown: function (event) {
+        switch(event.keyCode) {
+            case cc.KEY.j:
                 this.ok = true;
                 break;
             case cc.KEY.k:
                 this.cancle = true;
                 break;  
+            case cc.KEY.a:
+                this.left = true;                  
+                break;
+            case cc.KEY.d:
+                this.right = true;                    
+                break;
             case cc.KEY.s:
                 this.down = true;
                 break;
@@ -540,6 +617,7 @@ cc.Class({
                 this.up = true;
                 break;                
         }
-    },    
+    },
+
 });
 // module.exports = GameData;

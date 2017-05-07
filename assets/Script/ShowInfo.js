@@ -1,7 +1,7 @@
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({
         GameData: {
             default: null,
             type: require('GameData')            
@@ -30,19 +30,15 @@ cc.Class({
             default: null,
             type: require('ArmInfo')
         },                      
-    },
+    }),
 
-    // use this for initialization
     onLoad: function () {
         this.isInfoOut = false;
         this.isMoved = false;
         this.isFixed = true;
-        this.accLeft = false;
-        this.accRight = false;
         this.node.on('GameControl:ShowRobotInfo', function ( event ) {
             this.showInfo(event);
         }.bind(this));      
-        this.setInputControl();
         this.PosIndex = cc.Enum({
             ROBOT_INFO_LEFT: 0,
             ROBOT_INFO_CENTER: 1,
@@ -53,42 +49,15 @@ cc.Class({
         });
     },
 
-    setInputControl: function () {
-        var self = this;
-        cc.eventManager.addListener({
-            event: cc.EventListener.KEYBOARD,
-            onKeyPressed: function (keyCode, event) {
-                switch(keyCode) {
-                    case cc.KEY.a:
-                        self.accLeft = true;
-                        self.accRight = false;
-                        break;
-                    case cc.KEY.d:
-                        self.accLeft = false;
-                        self.accRight = true;
-                        break;
-                }
-            },
-            onKeyReleased: function (keyCode, event) {
-                switch(keyCode) {
-                    case cc.KEY.a:
-                        self.accLeft = false;
-                        break;
-                    case cc.KEY.d:
-                        self.accRight = false;
-                        break;
-                }
-            }
-        }, self.node);
-    },
-
-    unfixed: function(robot) {
+    unfixed: function() {
         var self = this;
         if (self.isFixed) {
+            self.isMoved = false;
             var dt = cc.director.getAnimationInterval();
             var interval = cc.delayTime(dt);
             var callback = cc.callFunc(function () {
-                if (self.accRight) {
+                if (self.GameData.right) {
+                    self.GameData.right = false;
                     if (!self.isInfoOut) {
                         var outpos = self.pos[self.PosIndex.ROBOT_INFO_LEFT];
                         self.robotInfo.node.runAction(cc.moveTo(1, cc.p(outpos.x, outpos.y)));
@@ -96,13 +65,12 @@ cc.Class({
 
                         var inpos = self.pos[self.PosIndex.ARM_INFO_CENTER];
                         self.armInfo.node.runAction(cc.moveTo(1, cc.p(inpos.x, inpos.y)));
-                        // self.armInfo.unfixed(robot);
 
                         var inpos = self.pos[self.PosIndex.DRIVER_INFO_CENTER];
                         self.driverInfo.node.runAction(cc.moveTo(1, cc.p(inpos.x, inpos.y)));                                               
-                        // self.fixed();                            
                     }
-                } else if (self.accLeft) {
+                } else if (self.GameData.left) {
+                    self.GameData.left = false;
                     if (self.isInfoOut) {
                         var inpos = self.pos[self.PosIndex.ROBOT_INFO_CENTER];
                         self.robotInfo.node.runAction(cc.moveTo(1, cc.p(inpos.x, inpos.y)));
@@ -110,11 +78,9 @@ cc.Class({
 
                         var outpos = self.pos[self.PosIndex.ARM_INFO_RIGHT];
                         self.armInfo.node.runAction(cc.moveTo(1, cc.p(outpos.x, outpos.y)));
-                        // self.armInfo.fixed();
 
                         var outpos = self.pos[self.PosIndex.DRIVER_INFO_RIGHT];
                         self.driverInfo.node.runAction(cc.moveTo(1, cc.p(outpos.x, outpos.y)));                                      
-                        // self.unfixed();  
                     } 
                 }
             }, self);
@@ -136,13 +102,15 @@ cc.Class({
         var self = this;
         if (!event.detail.show) {
             self.node.opacity = 0;
+            self.armInfo.showArmInfo(event);
+            self.robotInfo.showRobotInfo(event);
+            self.driverInfo.showDriverInfo(event);            
             self.fixed();
             return;
         }
         self.node.opacity = 255;
         var robot = event.detail.robot;
-        self.unfixed(robot);
-        // cc.log('robot.robotHead = ' + robot.robotHead);
+        self.unfixed();
         cc.loader.loadRes(robot.robotHead, cc.SpriteFrame, function (err, spriteFrame) {
             self.robotHead.getComponent(cc.Sprite).spriteFrame = spriteFrame;
         });
@@ -150,9 +118,4 @@ cc.Class({
         self.robotInfo.showRobotInfo(event);
         self.driverInfo.showDriverInfo(event);
     },
-
-    // called every frame, uncomment this function to activate update callback
-    // update: function (dt) {
-
-    // },
 });

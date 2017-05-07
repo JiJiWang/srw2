@@ -1,0 +1,30 @@
+{
+  "ver": "1.0.0",
+  "uuid": "95f4cf56-37e0-4741-9a6f-ca94414f0f44",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "subMetas": {
+    "Khufu": {
+      "ver": "1.0.3",
+      "uuid": "c6581a99-6b5e-4c41-99a4-babeb38ab35a",
+      "rawTextureUuid": "95f4cf56-37e0-4741-9a6f-ca94414f0f44",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 40,
+      "height": 53,
+      "rawWidth": 40,
+      "rawHeight": 53,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

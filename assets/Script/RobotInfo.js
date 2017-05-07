@@ -1,7 +1,7 @@
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({
         GameData: {
             default: null,
             type: require('GameData')            
@@ -10,9 +10,8 @@ cc.Class({
             default: [],
             type: [cc.Label]
         },                  
-    },
+    }),
 
-    // use this for initialization
     onLoad: function () {
 
     },
@@ -45,9 +44,4 @@ cc.Class({
             self.infos[i].string = self.GameData.getRobot(robot.id)[infosIndex[i]];
         }
     },
-
-    // called every frame, uncomment this function to activate update callback
-    // update: function (dt) {
-
-    // },
 });

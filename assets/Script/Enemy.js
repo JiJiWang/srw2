@@ -79,10 +79,12 @@ cc.Class({
         }, this);
         var delay = cc.delayTime(0.2);
         var seq = cc.sequence(movex, movey, delay, callback);
-        this.node.runAction(seq);
-        var followAction = cc.follow(this.node, cc.rect(0, 0, 256 * 2 - 100, 240));
-        event.detail.map.runAction(followAction);         
+        this.node.runAction(seq);         
         this.isMoved = true;
+    },
+
+    getRobotName: function () {
+        return this.GameData.getRobotName(this.id);
     },
 
     setHp: function(hp) {

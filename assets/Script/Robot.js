@@ -1,7 +1,7 @@
 cc.Class({
     extends: cc.Component,
 
-    properties: {
+    properties: () => ({       
         GameData: {
             default: null,
             type: require('GameData')            
@@ -19,72 +19,66 @@ cc.Class({
         driverHead: '',            
         tilex: 0,
         tiley: 0,
-    },
+    }),
 
-    // use this for initialization
     onLoad: function () {
         this.isSelected= false;
         this.isMoved = false;
         this.isAlive = true;
         this.HPLabel.string = this.getHp();
         this.node.on('GameControl:Move', function(event) {
-            // cc.log('Robot Move');
             this.move(event);
         }.bind(this));
     },
 
-    onCollisionEnter: function (other, self) {
-        this.isSelected = true;
-        // cc.log('this.isSelected = ' + this.isSelected );
-        if (!this.isMoved) {
-            var blinkAction = cc.blink(1,1).repeatForever()
-            blinkAction.setTag(26);
-            self.node.runAction(blinkAction);
+    onCollisionEnter: function () {
+        var self = this;
+        self.isSelected = true;
+        if (self.node.group == 'Blue') {
+            if (!self.isMoved) {
+                var blinkAction = cc.blink(1,1).repeatForever()
+                blinkAction.setTag(26);
+                self.node.runAction(blinkAction);
+            }
         }
-        var root = cc.find('Canvas');
-        if (root) {
-            var robot = self.node.getComponent('Robot');
-            root.emit('Robot:onCollisionEnter', {
-                robot: robot,
-            });
-        }
-        // cc.log('Robot: on collision enter');
     },
 
-    onCollisionStay: function (other, self) {
-        // cc.log('Robot: on collision stay');
-    },
-
-    onCollisionExit: function (other, self) {
-        this.isSelected = false;
-        if (!this.isMoved) {
-            self.node.stopActionByTag(26);
-            self.node.opacity = 255;
+    onCollisionExit: function () {
+        var self = this;
+        self.isSelected = false;
+        if (self.node.group == 'Blue') {
+            if (!self.isMoved) {
+                self.node.stopActionByTag(26);
+                self.node.opacity = 255;
+            }
         }
-        // cc.log('Robot: on collision exit');
     },
     
     move: function (event) {
-        this.isMoved = true;
-        var dx = (event.detail.x - this.tilex) * 16;
-        var dy = (this.tiley - event.detail.y) * 16;
-        this.tilex = event.detail.x;
-        this.tiley = event.detail.y;
+        var self = this;
+        var dx = (event.detail.x - self.tilex) * 16;
+        var dy = (self.tiley - event.detail.y) * 16;
+        self.tilex = event.detail.x;
+        self.tiley = event.detail.y;
         var sx = Math.abs(dx);
         var sy = Math.abs(dy);
         var sxy = sx + sy;
         var movex = cc.moveBy(sx / sxy, dx, 0).easing(cc.easeCubicActionIn());
         var movey = cc.moveBy(sy / sxy, 0, dy).easing(cc.easeCubicActionOut());
         var callback = cc.callFunc(function() {
-            this.node.color = new cc.Color(160, 160, 160);
-            var root = cc.find('Canvas');
-            if (root) {
-                root.emit('Robot:Moved');
-            }            
-        }, this);
+            self.node.color = new cc.Color(160, 160, 160);
+            self.GameData.node.emit('Robot:Moved', {
+                robot: self,
+            });          
+        }, self);
         var delay = cc.delayTime(0.2);
         var seq = cc.sequence(movex, movey, delay, callback);
-        this.node.runAction(seq);
+        self.node.runAction(seq);
+        self.isMoved = true;
+    },
+
+    getRobotName: function () {
+        return this.GameData.getRobotName(this.id);
     },
 
     setHp: function(hp) {
@@ -111,10 +105,9 @@ cc.Class({
         var self = this;
         var hp0 = self.getHp();
         var defence = self.getDefence();
-        // cc.log('before injure self.hp = ' + hp0 + ', arm.strength = ' + strength + ', self.defence = ' + defence);
         var hp = hp0 - strength + defence;
         var dhp = 0;
-        if (hp < 0) {
+        if (hp <= 0) {
             dhp = -hp0;
             hp = 0;
             self.setHp(hp);
@@ -139,11 +132,5 @@ cc.Class({
         });
         var seq = cc.sequence(fadeIn, callback, fadeout);
         self.HPChange.node.runAction(seq);        
-        // cc.log('after injure self.hp = ' + self.getHp() + ', dhp = ' + dhp);
     },
-
-    // called every frame, uncomment this function to activate update callback
-    // update: function (dt) {
-
-    // },
 });

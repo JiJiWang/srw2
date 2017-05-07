@@ -23,14 +23,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        // robots: {
-        //     default: [],
-        //     type: [cc.Node]
-        // },
-        // enemys: {
-        //     default: [],
-        //     type: [cc.Node]            
-        // },
         armInfo: {
             default: null,
             type: require('ArmInfo')
@@ -39,68 +31,87 @@ cc.Class({
 
     // use this for initialization
     onLoad: function () {
-        this.isFixed = true;
-        // this.GameData = this.node.getComponent('GameData');
-        // this.GameData.cacheEnemys(this.enemys);
-        // this.GameData.cacheRobots(this.robots);
-        this.GameData.roundReset();
         var manager = cc.director.getCollisionManager();
         manager.enabled = true;
+        this.isFixed = true;
+        this.GameData.roundReset();
+        this.isSelectedSth = false;
         this.gameState = this.GameData.GameState.GAME_START;
         this.selectingRobot = null;
         this.selectingEnemy = null;
         this.node.on('GameStart:Start', function(event) {
-            // cc.log('GameStart');
             this.GameData.gameStart.node.destroy();
             this.gameState = this.GameData.GameState.NONE;
             this.GameData.map.active = true;
             this.gameSelector.active = true;
             this.unfixed();                
-        }.bind(this));
-        this.node.on('Robot:onCollisionEnter', function(event) {
-            // cc.log('GameControl:Robot.onCollisionEnter');
-            if (this.gameState != this.GameData.GameState.MOVE_ROBOT 
-                && this.gameState != this.GameData.GameState.ATTACK) {
-                this.selectingRobot = event.detail.robot;
-                this.gameState = this.GameData.GameState.SELECTING_ROBOT;
-            }
-        }.bind(this));
-        this.node.on('Enemy:onCollisionEnter', function(event) {
-            cc.log('GameControl:Enemy.onCollisionEnter');
-            if (this.gameState != this.GameData.GameState.MOVE_ROBOT) {
-                this.selectingEnemy = event.detail.enemy;
-                this.gameState = this.GameData.GameState.SELECTING_ENEMY;
-            }
-        }.bind(this));
+        }.bind(this));     
         this.node.on('Robot:Moved', function(event) {
             // cc.log('GameControl:Robot.Moved');
-            if (this.selectingRobot.isMoved) {
-                var menu;
-                if (this.isAttackable(this.selectingRobot, this.GameData.enemys)) {
-                    // cc.log('isAttackable = true');
-                    menu = [
-                        [this.GameData.MenuID.ATTACK, this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE],
-                        [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
-                    ];                      
-                }
-                else {
-                    // cc.log('isAttackable = false');
-                    menu = [
-                        [this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE],
-                        [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
-                    ];               
-                }
-                this.robotMenu.emit('GameControl:ShowRobotMenu', {
-                    robot: this.selectingRobot,
-                    show: true,
-                    flag: 1,
-                    menu: menu,
-                });                 
-                this.gameSelector.emit('GameControl:Fixed');
-                this.gameState = this.GameData.GameState.SHOW_ROBOT_MENU;
-            }            
+            var robot = event.detail.robot;
+            // cc.log('robot.node.group = ' + robot.node.group);
+            if (robot.node.group == "Blue"){
+                if (this.selectingRobot.isMoved) {
+                    var menu;
+                    if (this.isAttackable(this.selectingRobot, this.GameData.enemys)) {
+                        // cc.log('isAttackable = true');
+                        menu = [
+                            [this.GameData.MenuID.ATTACK, this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE],
+                            [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
+                        ];                      
+                    }
+                    else {
+                        // cc.log('isAttackable = false');
+                        menu = [
+                            [this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE],
+                            [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
+                        ];               
+                    }
+                    this.robotMenu.emit('GameControl:ShowRobotMenu', {
+                        robot: this.selectingRobot,
+                        show: true,
+                        flag: 1,
+                        menu: menu,
+                    });                 
+                    this.gameSelector.emit('GameControl:Fixed');
+                    this.gameState = this.GameData.GameState.SHOW_ROBOT_MENU;
+                } 
+            }           
         }.bind(this));  
         // cc.log('this.gameState = ' + this.gameState);
+    },
+
+    onSelectRed: function(robot) {
+        if (this.gameState == this.GameData.GameState.NONE 
+            || this.gameState == this.GameData.GameState.SELECTING_ROBOT
+            || this.gameState == this.GameData.GameState.SELECTING_ENEMY) {
+            this.selectingEnemy = robot;
+            this.isSelectedSth = true;
+            this.gameState = this.GameData.GameState.SELECTING_ENEMY;
+        }         
+    },
+
+    onSelectBlue: function(robot) {       
+        if (this.gameState == this.GameData.GameState.NONE 
+            || this.gameState == this.GameData.GameState.SELECTING_ROBOT
+            || this.gameState == this.GameData.GameState.SELECTING_ENEMY) {
+            this.selectingRobot = robot;
+            this.isSelectedSth = true;
+            this.gameState = this.GameData.GameState.SELECTING_ROBOT;
+        } 
+    },
+
+    onUnselect: function() {
+        if (this.gameState == this.GameData.GameState.SELECTING_ROBOT) {
+            this.selectingRobot = null;
+            this.isSelectedSth = false;
+            this.gameState = this.GameData.GameState.NONE;
+        }
+        if (this.gameState == this.GameData.GameState.SELECTING_ENEMY) {
+            this.selectingEnemy = null;
+            this.isSelectedSth = false;
+            this.gameState = this.GameData.GameState.NONE;
+        }                
     },
 
     unfixed: function() {
@@ -110,14 +121,14 @@ cc.Class({
             var interval = cc.delayTime(keySensibility);
             var callback = cc.callFunc(function () {
                 if (self.GameData.ok) {
-                    self.onKeyJReleased();
+                    self.onOK();
                     self.GameData.ok = false;
-                    // cc.log('this.gameState = ' + self.gameState);
+                    cc.log(self.GameData.getGameState(self.gameState));
                 }
                 else if (self.GameData.cancle) {
-                    self.onKeyKReleased();
+                    self.onCancle();
                     self.GameData.cancle = false;
-                    // cc.log('this.gameState = ' + self.gameState);
+                    cc.log(self.GameData.getGameState(self.gameState));
                 }
             }, self);
             var sequence = cc.sequence(callback, interval);
@@ -126,33 +137,40 @@ cc.Class({
         }
     },
 
-    onKeyKReleased: function() {
+    onCancle: function() {
         var self = this;
         switch(self.gameState) {
             case self.GameData.GameState.NONE:
-                self.gameSelector.emit('GameControl:Unfixed');
-                // cc.log('onKeyKReleased:this.gameState.NONE');
                 break;
             case self.GameData.GameState.SELECTING_ROBOT:           
-                // cc.log('onKeyKReleased:this.gameState.SELECTING_ROBOT');
-                break;                
+                break;            
+            case self.GameData.GameState.SELECTING_ENEMY:
+                self.robotInfo.emit('GameControl:ShowRobotInfo', {
+                    robot: self.selectingEnemy,
+                    show: false,
+                });     
+                self.gameSelector.emit('GameControl:Unfixed');               
+                break;    
             case self.GameData.GameState.SHOW_ROBOT_MENU:
                 self.robotMenu.emit('GameControl:ShowRobotMenu', {
                     robot: self.selectingRobot,
                     show: false,
                 });
                 self.gameSelector.emit('GameControl:Unfixed');
-                self.gameState = self.GameData.GameState.NONE;                
-                // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_MENU');
+                if (self.isSelectedSth) {
+                    self.gameState = self.GameData.GameState.SELECTING_ROBOT;
+                }
+                else {
+                    self.gameState = self.GameData.GameState.NONE;
+                }
                 break;        
             case self.GameData.GameState.SHOW_GAME_MENU:
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }            
-                // cc.log('onKeyKReleased:this.gameState.SHOW_GAME_MENU');
                 break;            
             case self.GameData.GameState.MOVE_ROBOT:
                 self.GameData.map.emit('GameControl:ShowRange', {
@@ -161,13 +179,12 @@ cc.Class({
                     maneuver: self.selectingRobot.getManeuver(),
                     show: false,
                 });             
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }
-                // cc.log('onKeyKReleased:this.gameState.MOVE_ROBOT');
                 break; 
             case self.GameData.GameState.SHOW_ROBOT_INFO:
                 self.robotInfo.emit('GameControl:ShowRobotInfo', {
@@ -175,13 +192,12 @@ cc.Class({
                     show: false,
                 });                    
                 self.gameSelector.emit('GameControl:Unfixed');
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }                         
-                // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break;   
             case self.GameData.GameState.SHOW_ARM_INFO:
                 self.armInfo.node.emit('GameControl:ShowArmInfo', {
@@ -189,16 +205,14 @@ cc.Class({
                     show: false,
                 });                    
                 self.gameSelector.emit('GameControl:Unfixed');
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }                         
-                // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break; 
             case self.GameData.GameState.SELECT_ARM:
-                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
                 var arm = self.armInfo.getArm();
                 self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
@@ -211,16 +225,14 @@ cc.Class({
                     show: false,
                 });
                 self.gameSelector.emit('GameControl:Unfixed');
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }                         
-                // cc.log('onKeyKReleased:this.gameState.SHOW_ROBOT_INFO');
                 break;
             case self.GameData.GameState.ATTACK:
-                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
                 var arm = self.armInfo.getArm();
                 self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
@@ -229,18 +241,17 @@ cc.Class({
                     show: false,
                 });
                 self.gameSelector.emit('GameControl:Unfixed');
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }                         
-                // cc.log('onKeyKReleased:this.gameState.ATTACK');
                 break;                                                          
         }
     },
 
-    onKeyJReleased: function() {
+    onOK: function() {
         var self = this;
         switch(self.gameState) {
             case self.GameData.GameState.NONE:
@@ -256,10 +267,9 @@ cc.Class({
                 });
                 self.gameSelector.emit('GameControl:Fixed');
                 self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
-                // cc.log('onKeyJReleased:this.gameState.NONE');
                 break;
             case self.GameData.GameState.SELECTING_ROBOT:    
-                if (self.selectingRobot.isSelected) {
+                if (self.isSelectedSth) {
                     if (!self.selectingRobot.isMoved) {
                         if (self.isAttackable(self.selectingRobot, self.GameData.enemys)) {
                             var menu = [
@@ -281,6 +291,14 @@ cc.Class({
                         });
                         self.gameSelector.emit('GameControl:Fixed');
                         self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
+                    }
+                    else {
+                        self.robotInfo.emit('GameControl:ShowRobotInfo', {
+                            robot: self.selectingRobot,
+                            show: true,
+                        });                    
+                        self.gameSelector.emit('GameControl:Fixed');                                    
+                        self.gameState = self.GameData.GameState.SHOW_ROBOT_INFO;                          
                     }  
                 }
                 else {
@@ -297,7 +315,13 @@ cc.Class({
                     self.gameSelector.emit('GameControl:Fixed');
                     self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;                    
                 }   
-                // cc.log('onKeyJReleased:this.gameState.SELECTING_ROBOT');
+                break;
+            case self.GameData.GameState.SELECTING_ENEMY:
+                self.robotInfo.emit('GameControl:ShowRobotInfo', {
+                    robot: self.selectingEnemy,
+                    show: true,
+                });
+                self.gameSelector.emit('GameControl:Fixed');                    
                 break;
             case self.GameData.GameState.SHOW_ROBOT_MENU:
                 self.robotMenu.emit('GameControl:ShowRobotMenu', {
@@ -311,7 +335,6 @@ cc.Class({
                     case self.GameData.MenuID.NONE:
                         break;
                     case self.GameData.MenuID.MOVE:
-                        // var map = self.map[self.level];
                         self.gameSelector.emit('GameControl:Unfixed');            
                         if (!self.selectingRobot.isMoved) {
                             self.GameData.map.emit('GameControl:ShowRange', {
@@ -349,11 +372,11 @@ cc.Class({
                         break;                        
                     case self.GameData.MenuID.STANDBY:
                         self.gameSelector.emit('GameControl:Unfixed');            
+                        self.gameState = self.GameData.GameState.SELECTING_ROBOT;              
                         break;                        
                     case self.GameData.MenuID.ROUND_OVER:   
                         self.roundOver();                   
                         self.enemyAction(self.GameData.enemys, self.GameData.robots);
-                        // self.gameState = self.GameData.GameState.ENEMY_ACTION;                     
                         break;                        
                     case self.GameData.MenuID.TOOLS:
                         break;                        
@@ -366,10 +389,8 @@ cc.Class({
                     case self.GameData.MenuID.GOAL:
                         break;                        
                 }
-                // cc.log('onKeyJReleased:this.gameState.SHOW_ROBOT_MENU');
                 break;
             case self.GameData.GameState.SHOW_GAME_MENU:
-                // cc.log('onKeyJReleased:this.gameState.SHOW_GAME_MENU');
                 break;
             case self.GameData.GameState.MOVE_ROBOT:
                 var gameSelector = self.gameSelector.getComponent('GameSelector');
@@ -384,21 +405,16 @@ cc.Class({
                         x: gameSelector.tilex,
                         y: gameSelector.tiley,
                     });
-                    self.gameState = self.GameData.GameState.NONE;
                 }
                 // else {
                 //     cc.log('Out of robot maneuver range');
                 // }
-                // cc.log('onKeyJReleased:this.gameState.MOVE_ROBOT');
                 break;            
             case self.GameData.GameState.SHOW_ROBOT_INFO:            
-                // cc.log('onKeyJReleased:this.gameState.SHOW_ROBOT_INFO');
                 break;
             case self.GameData.GameState.SHOW_ARM_INFO:  
-                // cc.log('onKeyJReleased:this.gameState.SHOW_ARM_INFO');
                 break;  
             case self.GameData.GameState.SELECT_ARM:
-                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
                 var arm = self.armInfo.getArm();
                 self.GameData.map.emit('GameControl:ShowRange', {
                     x: self.selectingRobot.tilex,
@@ -412,11 +428,9 @@ cc.Class({
                 });
                 self.gameSelector.emit('GameControl:Unfixed');                     
                 self.gameState = self.GameData.GameState.ATTACK;              
-                // cc.log('onKeyJReleased:this.gameState.SELECT_ARM');
                 break;                                      
             case self.GameData.GameState.ATTACK:  
                 var gameSelector = self.gameSelector.getComponent('GameSelector');
-                // var arm = self.armInfo.getComponent('ArmInfo').selectedArm;
                 var arm = self.armInfo.getArm();
                 var isAttackedSuc = self.attack(self.selectingRobot, self.GameData.enemys, arm, gameSelector);
                 if (isAttackedSuc) {
@@ -430,17 +444,14 @@ cc.Class({
                     self.selectingRobot.isMoved = true;
                     self.gameState = self.GameData.GameState.NONE;
                 }                       
-                // cc.log('onKeyJReleased:this.gameState.ATTACK');
                 break;                             
             case self.GameData.GameState.ENEMY_ACTION:  
-                // cc.log('onKeyJReleased:this.gameState.ENEMY_ACTION');
                 break;                             
         }
     },
 
     isAttackable: function(robot, enemys) {
         for (var i = 0; i < enemys.length; i++) {
-            // var enemy = enemys[i].getComponent('Enemy');
             var enemy = enemys[i];
             if (enemy.isAlive) {
                 var dx = Math.abs(enemy.tilex - robot.tilex);
@@ -475,7 +486,6 @@ cc.Class({
     attack: function(robot, enemys, arm, gameSelector) {
         // cc.log('gameSelector.tilex = ' + gameSelector.tilex + ', gameSelector.tiley = ' + gameSelector.tiley);
         for (var i = 0; i < enemys.length; i++) {
-            // var enemy = enemys[i].getComponent('Enemy');
             var enemy = enemys[i];
             if (enemy.isAlive) {
                 // cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
@@ -495,8 +505,10 @@ cc.Class({
         var dt = 3;
         var delay = cc.delayTime(dt);
         var callback = cc.callFunc(function() {
+            // cc.log('enemys.length = ' + enemys.length);
             for (var i = 0; i < enemys.length; i++) {
                 var enemy = enemys[i];
+                // cc.log('enemy.isMoved = ' + enemy.isMoved);
                 if (enemy.isMoved) {
                     continue;
                 }
@@ -552,9 +564,6 @@ cc.Class({
     },
 
     enemyAttack: function(enemy, robots) {
-        // if (enemy.isMoved) {
-        //     return false;
-        // }
         for (var i = 0; i < robots.length; i++) {
             var robot = robots[i];
             if (robot.isAlive) {
@@ -564,7 +573,6 @@ cc.Class({
                 // cc.log('ds = ' + ds);
                 var arm1 = enemy.getArm(0);
                 if (arm1.RANGE >= ds) {
-                    // robot.injure(enemy.armOneStrengthAir);
                     robot.injure(arm1.AIR);
                     enemy.isMoved = true;
                     enemy.node.color = new cc.Color(160, 160, 160);
@@ -572,17 +580,18 @@ cc.Class({
                 }
                 var arm2 = enemy.getArm(1);
                 if (arm2.RANGE >= ds) {
-                    // robot.injure(enemy.armTwoStrengthAir);
                     robot.injure(arm2.AIR);
                     enemy.isMoved = true;
                     enemy.node.color = new cc.Color(160, 160, 160);
                     return true;
                 }     
             }       
-        }    
+        }
+        return false;    
     },
 
     enemyMove: function(enemy, enemys, robots) {
+        cc.log('enemy:enemyMove');
         var self = this;
         var cra = new Array();//closed robot array
         for (var i = 0; i < robots.length; i++) {
@@ -609,7 +618,7 @@ cc.Class({
             if (cra[a][1] <= 1) {
                 return ;
             }            
-            cc.log('closedRobot.name = ' + closedRobot.robotName);
+            cc.log('closedRobot.name = ' + closedRobot.getRobotName());
             var isBlock = [false, false, false, false];
             for (var i = 0; i < robots.length; i++) {
                 var robot = robots[i];
@@ -757,26 +766,23 @@ cc.Class({
                         endx = paAvailable[mindi][0];                        
                         endy = paAvailable[mindi][1];                        
                     }
-                    cc.log('endx = ' + endx + ' , endy = ' + endy);
-                    var dx = (endx - enemy.tilex) * 16;
-                    var dy = (enemy.tiley - endy) * 16;
-                    enemy.tilex = endx;
-                    enemy.tiley = endy;
-                    var sx = Math.abs(dx);
-                    var sy = Math.abs(dy);
-                    var sxy = sx + sy;
-                    var movex = cc.moveBy(sx / sxy, dx, 0).easing(cc.easeCubicActionIn());
-                    var movey = cc.moveBy(sy / sxy, 0, dy).easing(cc.easeCubicActionOut());
+
+                    var followAction = cc.follow(enemy.node, cc.rect(0, 0, 256, 240));
+                    self.GameData.map.runAction(followAction);         
+
+                    var event = {
+                        detail: {
+                            x: endx,
+                            y: endy,
+                        }
+                    };
+                    enemy.move(event);
                     var callback = cc.callFunc(function() {
-                        enemy.node.color = new cc.Color(160, 160, 160);
                         self.enemyAttack(enemy, robots);
                     }, enemy);
-                    var delay = cc.delayTime(0.2);
-                    var seq = cc.sequence(movex, movey, delay, callback);
-                    enemy.node.runAction(seq);
-                    var followAction = cc.follow(enemy.node, cc.rect(0, 0, 320 * 2 - 100, 480));
-                    self.GameData.map.runAction(followAction);         
-                    enemy.isMoved = true;
+                    var delay = cc.delayTime(1.2);
+                    var seq = cc.sequence(delay, callback);
+                    self.node.runAction(seq);                    
                     return ;
                 }
             }            

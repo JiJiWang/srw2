@@ -1,4 +1,3 @@
-// var GameData = require('GameData');
 cc.Class({
     extends: cc.Component,
 

@@ -4,11 +4,13 @@
       false,
       false,
       false,
+      false,
       false
     ],
     [
       false,
       false,
+      true,
       true,
       true
     ],
@@ -16,11 +18,20 @@
       false,
       true,
       false,
+      false,
       false
     ],
     [
       false,
       true,
+      false,
+      false,
+      false
+    ],
+    [
+      false,
+      true,
+      false,
       false,
       false
     ]
@@ -33,8 +44,9 @@
   "group-list": [
     "default",
     "Selector",
-    "Robot",
-    "Block"
+    "Blue",
+    "Block",
+    "Red"
   ],
   "simulator-orientation": false,
   "simulator-resolution": {
