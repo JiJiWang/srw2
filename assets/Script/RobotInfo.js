@@ -16,17 +16,16 @@ cc.Class({
 
     },
 
-    showRobotInfo: function(event) {
+    showRobotInfo: function(robot, show) {
         var self = this;
 
-        if (!event.detail.show) {
+        if (!show) {
             self.node.opacity = 0;
             return;
         }
 
         self.node.opacity = 255;
 
-        var robot = event.detail.robot;
         var infosIndex = [
             'NAME',
             'LEVEL',

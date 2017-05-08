@@ -35,10 +35,7 @@ cc.Class({
     onLoad: function () {
         this.isInfoOut = false;
         this.isMoved = false;
-        this.isFixed = true;
-        this.node.on('GameControl:ShowRobotInfo', function ( event ) {
-            this.showInfo(event);
-        }.bind(this));      
+        this.isFixed = true;      
         this.PosIndex = cc.Enum({
             ROBOT_INFO_LEFT: 0,
             ROBOT_INFO_CENTER: 1,
@@ -98,24 +95,23 @@ cc.Class({
         }
     },
 
-    showInfo: function(event) {
+    showInfo: function(robot, show) {
         var self = this;
-        if (!event.detail.show) {
+        if (!show) {
             self.node.opacity = 0;
-            self.armInfo.showArmInfo(event);
-            self.robotInfo.showRobotInfo(event);
-            self.driverInfo.showDriverInfo(event);            
+            self.armInfo.showArmInfo(robot, show);
+            self.robotInfo.showRobotInfo(robot, show);
+            self.driverInfo.showDriverInfo(robot, show);            
             self.fixed();
             return;
         }
         self.node.opacity = 255;
-        var robot = event.detail.robot;
         self.unfixed();
         cc.loader.loadRes(robot.robotHead, cc.SpriteFrame, function (err, spriteFrame) {
             self.robotHead.getComponent(cc.Sprite).spriteFrame = spriteFrame;
         });
-        self.armInfo.showArmInfo(event);
-        self.robotInfo.showRobotInfo(event);
-        self.driverInfo.showDriverInfo(event);
+        self.armInfo.showArmInfo(robot, show);
+        self.robotInfo.showRobotInfo(robot, show);
+        self.driverInfo.showDriverInfo(robot, show);
     },
 });

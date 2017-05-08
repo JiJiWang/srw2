@@ -20,17 +20,16 @@ cc.Class({
 
     },
 
-    showDriverInfo: function(event) {
+    showDriverInfo: function(robot, show) {
         var self = this;
 
-        if (!event.detail.show) {
+        if (!show) {
             self.node.opacity = 0;
             return;
         }
 
         self.node.opacity = 255;
 
-        var robot = event.detail.robot;
         cc.loader.loadRes(robot.driverHead, cc.SpriteFrame, function (err, spriteFrame) {
             self.driverHead.getComponent(cc.Sprite).spriteFrame = spriteFrame;
         });

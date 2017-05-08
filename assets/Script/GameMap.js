@@ -6,19 +6,14 @@ cc.Class({
     }),
 
     onLoad: function () {
-        this.node.on('GameControl:ShowRange', function (event) {
-            this.showRange(event);
-        }.bind(this));       
+       
     },
 
-    showRange: function(event) {
+    showRange: function(x, y, maneuver, show) {
         var self = this;
         var map = self.getComponent(cc.TiledMap);
         var ground = map.getLayer('ground');
-        var x = event.detail.x;
-        var y = event.detail.y;
-        var maneuver = event.detail.maneuver;
-        if (event.detail.show) {
+        if (show) {
             var color = new cc.Color(160, 160, 160);
         }
         else {

@@ -26,9 +26,6 @@ cc.Class({
         this.isMoved = false;
         this.isAlive = true;
         this.HPLabel.string = this.getHp();
-        this.node.on('GameControl:Move', function(event) {
-            this.move(event);
-        }.bind(this));
     },
 
     onCollisionEnter: function () {
@@ -54,12 +51,12 @@ cc.Class({
         }
     },
     
-    move: function (event) {
+    move: function (x, y) {
         var self = this;
-        var dx = (event.detail.x - self.tilex) * 16;
-        var dy = (self.tiley - event.detail.y) * 16;
-        self.tilex = event.detail.x;
-        self.tiley = event.detail.y;
+        var dx = (x - self.tilex) * 16;
+        var dy = (self.tiley - y) * 16;
+        self.tilex = x;
+        self.tiley = y;
         var sx = Math.abs(dx);
         var sy = Math.abs(dy);
         var sxy = sx + sy;

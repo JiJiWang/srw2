@@ -28,10 +28,7 @@ cc.Class({
         this.isMoved = false;
         this.isFixed = true;
         this.selectedID = 0;
-        this.armsID = [-1, -1];
-        this.node.on('GameControl:ShowArmInfo', function ( event ) {
-            this.showArmInfo(event);
-        }.bind(this));      
+        this.armsID = [-1, -1];     
     },
 
     unfixed: function() {
@@ -77,16 +74,15 @@ cc.Class({
         }
     },
 
-    showArmInfo: function(event) {
+    showArmInfo: function(robot, show) {
         var self = this;
-        if (!event.detail.show) {
+        if (!show) {
             self.node.opacity = 0;
             self.fixed();
             return;
         }
         self.node.opacity = 255;
         self.selectArm(0);
-        var robot = event.detail.robot;
         self.unfixed();
 
         var infosIndex = [

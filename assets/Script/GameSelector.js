@@ -44,12 +44,6 @@ cc.Class({
         this.isBlockedTop = false;
         this.isBlockedBottom = false;
         this.robotSelected = null;
-        this.node.on('GameControl:Fixed', function(event) {
-            this.fixed();
-        }.bind(this));
-        this.node.on('GameControl:Unfixed', function(event) {
-            this.unfixed();
-        }.bind(this));
     },
 
     unfixed: function() {

@@ -8,15 +8,19 @@ cc.Class({
         },  
         gameSelector:{
             default: null,
-            type: cc.Node
+            type: require('GameSelector')
         },
+        map:{
+            default: null,
+            type: require('GameMap')
+        },        
         robotMenu: {
             default: null,
-            type: cc.Node
+            type: require('RobotMenu')
         },
         robotInfo: {
             default: null,
-            type: cc.Node
+            type: require('ShowInfo')
         },
         armInfo: {
             default: null,
@@ -73,13 +77,8 @@ cc.Class({
                         [self.GameData.MenuID.NONE, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE]
                     ];               
                 }
-                self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                    robot: self.selectingRobot,
-                    show: true,
-                    flag: 1,
-                    menu: menu,
-                });                 
-                self.gameSelector.emit('GameControl:Fixed');
+                self.robotMenu.showRobotMenu(self.selectingRobot, menu, true, 1);                
+                self.gameSelector.fixed();
                 self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
             } 
         }
@@ -157,18 +156,12 @@ cc.Class({
             case self.GameData.GameState.SELECTING_ROBOT:           
                 break;            
             case self.GameData.GameState.SELECTING_ENEMY:
-                self.robotInfo.emit('GameControl:ShowRobotInfo', {
-                    robot: self.selectingEnemy,
-                    show: false,
-                });     
-                self.gameSelector.emit('GameControl:Unfixed');               
+                self.robotInfo.showInfo(self.selectingEnemy, false);   
+                self.gameSelector.unfixed();               
                 break;    
             case self.GameData.GameState.SHOW_ROBOT_MENU:
-                self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });
-                self.gameSelector.emit('GameControl:Unfixed');
+                self.robotMenu.showRobotMenu(self.selectingRobot, null, false, 1);
+                self.gameSelector.unfixed();
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -185,12 +178,10 @@ cc.Class({
                 }            
                 break;            
             case self.GameData.GameState.MOVE_ROBOT:
-                self.GameData.map.emit('GameControl:ShowRange', {
-                    x: self.selectingRobot.tilex,
-                    y: self.selectingRobot.tiley,
-                    maneuver: self.selectingRobot.getManeuver(),
-                    show: false,
-                });             
+                var x = self.selectingRobot.tilex;    
+                var y = self.selectingRobot.tiley; 
+                var maneuver = self.selectingRobot.getManeuver();   
+                self.map.showRange(x, y, maneuver, false);         
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -199,11 +190,8 @@ cc.Class({
                 }
                 break; 
             case self.GameData.GameState.SHOW_ROBOT_INFO:
-                self.robotInfo.emit('GameControl:ShowRobotInfo', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });                    
-                self.gameSelector.emit('GameControl:Unfixed');
+                self.robotInfo.showInfo(self.selectingRobot, false);                 
+                self.gameSelector.unfixed();
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -212,11 +200,8 @@ cc.Class({
                 }                         
                 break;   
             case self.GameData.GameState.SHOW_ARM_INFO:
-                self.armInfo.node.emit('GameControl:ShowArmInfo', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });                    
-                self.gameSelector.emit('GameControl:Unfixed');
+                self.armInfo.showArmInfo(self.selectingRobot, false);                   
+                self.gameSelector.unfixed();
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -226,17 +211,12 @@ cc.Class({
                 break; 
             case self.GameData.GameState.SELECT_ARM:
                 var arm = self.armInfo.getArm();
-                self.GameData.map.emit('GameControl:ShowRange', {
-                    x: self.selectingRobot.tilex,
-                    y: self.selectingRobot.tiley,
-                    maneuver: arm.RANGE,
-                    show: false,
-                });
-                self.armInfo.node.emit('GameControl:ShowArmInfo', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });
-                self.gameSelector.emit('GameControl:Unfixed');
+                var x = self.selectingRobot.tilex;    
+                var y = self.selectingRobot.tiley; 
+                var maneuver = arm.RANGE;   
+                self.map.showRange(x, y, maneuver, false);                 
+                self.armInfo.showArmInfo(self.selectingRobot, false);
+                self.gameSelector.unfixed();
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -246,13 +226,11 @@ cc.Class({
                 break;
             case self.GameData.GameState.ATTACK:
                 var arm = self.armInfo.getArm();
-                self.GameData.map.emit('GameControl:ShowRange', {
-                    x: self.selectingRobot.tilex,
-                    y: self.selectingRobot.tiley,
-                    maneuver: arm.RANGE,
-                    show: false,
-                });
-                self.gameSelector.emit('GameControl:Unfixed');
+                var x = self.selectingRobot.tilex;    
+                var y = self.selectingRobot.tiley; 
+                var maneuver = arm.RANGE;   
+                self.map.showRange(x, y, maneuver, false);  
+                self.gameSelector.unfixed();
                 if (self.isSelectedSth) {
                     self.gameState = self.GameData.GameState.SELECTING_ROBOT;
                 }
@@ -262,7 +240,7 @@ cc.Class({
                 break;  
             case self.GameData.GameState.SHOW_TROOPS:  
                 self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
-                self.gameSelector.emit('GameControl:Unfixed');
+                self.gameSelector.unfixed();
                 self.gameState = self.GameData.GameState.NONE;            
                 break;                                                                         
         }
@@ -276,13 +254,8 @@ cc.Class({
                     [self.GameData.MenuID.ROUND_OVER, self.GameData.MenuID.TOOLS, self.GameData.MenuID.SAVE],
                     [self.GameData.MenuID.TROOPS, self.GameData.MenuID.SWITCH, self.GameData.MenuID.GOAL]
                 ];                    
-                self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                    robot: self.selectingRobot,
-                    show: true,
-                    flag: 0,
-                    menu: menu,
-                });
-                self.gameSelector.emit('GameControl:Fixed');
+                self.robotMenu.showRobotMenu(self.selectingRobot, menu, true, 0);
+                self.gameSelector.fixed();
                 self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
                 break;
             case self.GameData.GameState.SELECTING_ROBOT:    
@@ -300,21 +273,13 @@ cc.Class({
                                 [self.GameData.MenuID.ARM, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE]
                             ];                             
                         }                   
-                        self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                            robot: self.selectingRobot,
-                            show: true,
-                            flag: 1,
-                            menu: menu,
-                        });
-                        self.gameSelector.emit('GameControl:Fixed');
+                        self.robotMenu.showRobotMenu(self.selectingRobot, menu, true, 1);
+                        self.gameSelector.fixed();
                         self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
                     }
                     else {
-                        self.robotInfo.emit('GameControl:ShowRobotInfo', {
-                            robot: self.selectingRobot,
-                            show: true,
-                        });                    
-                        self.gameSelector.emit('GameControl:Fixed');                                    
+                        self.robotInfo.showInfo(self.selectingRobot, true);                   
+                        self.gameSelector.fixed();                                    
                         self.gameState = self.GameData.GameState.SHOW_ROBOT_INFO;                          
                     }  
                 }
@@ -323,72 +288,50 @@ cc.Class({
                         [self.GameData.MenuID.ROUND_OVER, self.GameData.MenuID.TOOLS, self.GameData.MenuID.SAVE],
                         [self.GameData.MenuID.TROOPS, self.GameData.MenuID.SWITCH, self.GameData.MenuID.GOAL]
                     ];                    
-                    self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                        robot: self.selectingRobot,
-                        show: true,
-                        flag: 0,
-                        menu: menu,
-                    });
-                    self.gameSelector.emit('GameControl:Fixed');
+                    self.robotMenu.showRobotMenu(self.selectingRobot, menu, true, 0);
+                    self.gameSelector.fixed();
                     self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;                    
                 }   
                 break;
             case self.GameData.GameState.SELECTING_ENEMY:
-                self.robotInfo.emit('GameControl:ShowRobotInfo', {
-                    robot: self.selectingEnemy,
-                    show: true,
-                });
-                self.gameSelector.emit('GameControl:Fixed');                    
+                self.robotInfo.showInfo(self.selectingEnemy, true);
+                self.gameSelector.fixed();                    
                 break;
             case self.GameData.GameState.SHOW_ROBOT_MENU:
-                self.robotMenu.emit('GameControl:ShowRobotMenu', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });
-                var menu = self.robotMenu.getComponent('RobotMenu');
+                self.robotMenu.showRobotMenu(self.selectingRobot, null, false, 1);
+                var menu = self.robotMenu;
                 var menuid = menu.getMenuID();
                 // cc.log('menuid = ' + menuid);
                 switch(menuid) {
                     case self.GameData.MenuID.NONE:
                         break;
                     case self.GameData.MenuID.MOVE:
-                        self.gameSelector.emit('GameControl:Unfixed');            
+                        self.gameSelector.unfixed();            
                         if (!self.selectingRobot.isMoved) {
-                            self.GameData.map.emit('GameControl:ShowRange', {
-                                x: self.selectingRobot.tilex,
-                                y: self.selectingRobot.tiley,
-                                maneuver: self.selectingRobot.getManeuver(),
-                                show: true,
-                            });        
+                            var x = self.selectingRobot.tilex;    
+                            var y = self.selectingRobot.tiley; 
+                            var maneuver = self.selectingRobot.getManeuver();   
+                            self.map.showRange(x, y, maneuver, true);                                     
                             self.gameState = self.GameData.GameState.MOVE_ROBOT;  
                         }
                         break;
                     case self.GameData.MenuID.INFO:
-                        self.robotInfo.emit('GameControl:ShowRobotInfo', {
-                            robot: self.selectingRobot,
-                            show: true,
-                        });                    
-                        self.gameSelector.emit('GameControl:Fixed');                                    
+                        self.robotInfo.showInfo(self.selectingRobot, true);                   
+                        self.gameSelector.fixed();                                    
                         self.gameState = self.GameData.GameState.SHOW_ROBOT_INFO;              
                         break;
                     case self.GameData.MenuID.ATTACK:
-                        self.armInfo.node.emit('GameControl:ShowArmInfo', {
-                            robot: self.selectingRobot,
-                            show: true,
-                        });                    
-                        self.gameSelector.emit('GameControl:Fixed');                     
+                        self.armInfo.showArmInfo(self.selectingRobot, true);                  
+                        self.gameSelector.fixed();                     
                         self.gameState = self.GameData.GameState.SELECT_ARM;                 
                         break;
-                    case self.GameData.MenuID.ARM:
-                        self.armInfo.node.emit('GameControl:ShowArmInfo', {
-                            robot: self.selectingRobot,
-                            show: true,
-                        });                    
-                        self.gameSelector.emit('GameControl:Fixed');                     
+                    case self.GameData.MenuID.ARM:  
+                        self.armInfo.showArmInfo(self.selectingRobot, true);                 
+                        self.gameSelector.fixed();                     
                         self.gameState = self.GameData.GameState.SHOW_ARM_INFO;              
                         break;                        
                     case self.GameData.MenuID.STANDBY:
-                        self.gameSelector.emit('GameControl:Unfixed');            
+                        self.gameSelector.unfixed();            
                         self.gameState = self.GameData.GameState.SELECTING_ROBOT;              
                         break;                        
                     case self.GameData.MenuID.ROUND_OVER:   
@@ -401,7 +344,7 @@ cc.Class({
                         break;                        
                     case self.GameData.MenuID.TROOPS:
                         self.troopsInfo.showTroopsInfo(self.GameData.robots, true);
-                        self.gameSelector.emit('GameControl:Fixed');
+                        self.gameSelector.fixed();
                         self.gameState = self.GameData.GameState.SHOW_TROOPS;
                         break;                        
                     case self.GameData.MenuID.SWITCH:
@@ -414,18 +357,12 @@ cc.Class({
             case self.GameData.GameState.SHOW_GAME_MENU:
                 break;
             case self.GameData.GameState.MOVE_ROBOT:
-                var gameSelector = self.gameSelector.getComponent('GameSelector');
-                if (self.isMoveable(self.selectingRobot, gameSelector)) {
-                    self.GameData.map.emit('GameControl:ShowRange', {
-                        x: self.selectingRobot.tilex,
-                        y: self.selectingRobot.tiley,
-                        maneuver: self.selectingRobot.getManeuver(),
-                        show: false,
-                    });  
-                    self.selectingRobot.node.emit('GameControl:Move', {
-                        x: gameSelector.tilex,
-                        y: gameSelector.tiley,
-                    });
+                if (self.isMoveable(self.selectingRobot, self.gameSelector)) {
+                    var x = self.selectingRobot.tilex;    
+                    var y = self.selectingRobot.tiley; 
+                    var maneuver = self.selectingRobot.getManeuver();   
+                    self.map.showRange(x, y, maneuver, false);   
+                    self.selectingRobot.move(self.gameSelector.tilex, self.gameSelector.tiley);
                 }
                 break;            
             case self.GameData.GameState.SHOW_ROBOT_INFO:            
@@ -434,30 +371,22 @@ cc.Class({
                 break;  
             case self.GameData.GameState.SELECT_ARM:
                 var arm = self.armInfo.getArm();
-                self.GameData.map.emit('GameControl:ShowRange', {
-                    x: self.selectingRobot.tilex,
-                    y: self.selectingRobot.tiley,
-                    maneuver: arm.RANGE,
-                    show: true,
-                });
-                self.armInfo.node.emit('GameControl:ShowArmInfo', {
-                    robot: self.selectingRobot,
-                    show: false,
-                });
-                self.gameSelector.emit('GameControl:Unfixed');                     
+                var x = self.selectingRobot.tilex;    
+                var y = self.selectingRobot.tiley; 
+                var maneuver = arm.RANGE;   
+                self.map.showRange(x, y, maneuver, true);                  
+                self.armInfo.showArmInfo(self.selectingRobot, false);
+                self.gameSelector.unfixed();                     
                 self.gameState = self.GameData.GameState.ATTACK;              
                 break;                                      
             case self.GameData.GameState.ATTACK:  
-                var gameSelector = self.gameSelector.getComponent('GameSelector');
                 var arm = self.armInfo.getArm();
-                var isAttackedSuc = self.attack(self.selectingRobot, self.GameData.enemys, arm, gameSelector);
-                if (isAttackedSuc) {
-                    self.GameData.map.emit('GameControl:ShowRange', {
-                        x: self.selectingRobot.tilex,
-                        y: self.selectingRobot.tiley,
-                        maneuver: arm.RANGE,
-                        show: false,
-                    });  
+                var isAttackedSuc = self.attack(self.selectingRobot, self.GameData.enemys, arm, self.gameSelector);
+                if (isAttackedSuc) { 
+                    var x = self.selectingRobot.tilex;    
+                    var y = self.selectingRobot.tiley; 
+                    var maneuver = arm.RANGE;   
+                    self.map.showRange(x, y, maneuver, false);                    
                     self.selectingRobot.node.color = new cc.Color(160, 160, 160);
                     self.selectingRobot.isMoved = true;
                     self.gameState = self.GameData.GameState.NONE;
@@ -467,7 +396,7 @@ cc.Class({
                 break;      
             case self.GameData.GameState.SHOW_TROOPS:  
                 self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
-                self.gameSelector.emit('GameControl:Unfixed');
+                self.gameSelector.unfixed();
                 self.gameState = self.GameData.GameState.NONE;            
                 break;                                          
         }
@@ -561,12 +490,12 @@ cc.Class({
         self.GameData.map.stopAllActions();
         self.GameData.map.x = -32;
         self.GameData.map.y = 120;
-        self.gameSelector.x = 8;
-        self.gameSelector.y = 0;
-        self.gameSelector.getComponent('GameSelector').tilex = 12;
-        self.gameSelector.getComponent('GameSelector').tiley = 22;
-        self.gameSelector.emit('GameControl:Unfixed');
-        self.gameSelector.opacity = 255;
+        self.gameSelector.node.x = 8;
+        self.gameSelector.node.y = 0;
+        self.gameSelector.tilex = 12;
+        self.gameSelector.tiley = 22;
+        self.gameSelector.unfixed();
+        self.gameSelector.node.opacity = 255;
         self.selectingRobot = null;
         self.selectingEnemy = null;            
         self.gameState = self.GameData.GameState.NONE;
@@ -576,8 +505,8 @@ cc.Class({
         // cc.log('GameControl:roundOver');
         var self = this;
         self.GameData.roundOver();
-        self.gameSelector.emit('GameControl:Fixed');
-        self.gameSelector.opacity = 0;         
+        self.gameSelector.fixed();
+        self.gameSelector.node.opacity = 0;         
     },
 
     isNoneAlive: function(robots) {
@@ -802,14 +731,7 @@ cc.Class({
 
                     var followAction = cc.follow(enemy.node, cc.rect(0, 0, 256, 240));
                     self.GameData.map.runAction(followAction);         
-
-                    var event = {
-                        detail: {
-                            x: endx,
-                            y: endy,
-                        }
-                    };
-                    enemy.move(event);
+                    enemy.move(endx, endy);
                     var callback = cc.callFunc(function() {
                         self.enemyAttack(enemy, robots);
                     }, enemy);

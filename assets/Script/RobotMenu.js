@@ -44,9 +44,6 @@ cc.Class({
             [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
         ];
         this.isFixed = true;
-        this.node.on('GameControl:ShowRobotMenu', function ( event ) {
-            this.showRobotMenu(event);
-        }.bind(this));
     },
   
     unfixed: function() {
@@ -105,17 +102,16 @@ cc.Class({
         return this.menuID[this.menux - 1][this.menuy - 1];
     },
 
-    showRobotMenu: function(event) {
+    showRobotMenu: function(robot, menu, show, flag) {
         var self = this;
-        if (!event.detail.show) {
+        if (!show) {
             self.node.opacity = 0;
             self.fixed();
             return;
         }
         self.node.opacity = 255;
-        var robot = event.detail.robot;
         self.unfixed();
-        if (event.detail.flag) {
+        if (flag) {
             self.robotInfo.opacity = 255; 
             var infosIndex = [
                 'NAME',
@@ -134,17 +130,17 @@ cc.Class({
         }
         for (var i = 0; i < 2; i++) {
             for (var j = 0; j < 3; j++) {
-                var menu = cc.find('KW_UI_TEXT_MENU_' + (i + 1) + '_' + (j + 1), self.node);
-                if (menu) {
-                    menu.getComponent(cc.Label).string = self.GameData.MenuName[event.detail.menu[i][j]];
+                var findnode = cc.find('KW_UI_TEXT_MENU_' + (i + 1) + '_' + (j + 1), self.node);
+                if (findnode) {
+                    findnode.getComponent(cc.Label).string = self.GameData.MenuName[menu[i][j]];
                 }                 
-                if (event.detail.menu[i][j] == self.GameData.MenuID.NONE) {
+                if (menu[i][j] == self.GameData.MenuID.NONE) {
                     self.isExist[i][j] = false;
                 }
                 else {
                     self.isExist[i][j] = true;
                 }
-                self.menuID[i][j] = event.detail.menu[i][j];
+                self.menuID[i][j] = menu[i][j];
             }
         }                
     },
