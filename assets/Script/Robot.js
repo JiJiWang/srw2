@@ -66,10 +66,8 @@ cc.Class({
         var movex = cc.moveBy(sx / sxy, dx, 0).easing(cc.easeCubicActionIn());
         var movey = cc.moveBy(sy / sxy, 0, dy).easing(cc.easeCubicActionOut());
         var callback = cc.callFunc(function() {
-            self.node.color = new cc.Color(160, 160, 160);
-            self.GameData.node.emit('Robot:Moved', {
-                robot: self,
-            });          
+            this.node.color = new cc.Color(160, 160, 160);
+            this.GameData.GameControl.onRobotMoved(self);          
         }, self);
         var delay = cc.delayTime(0.2);
         var seq = cc.sequence(movex, movey, delay, callback);
@@ -111,10 +109,8 @@ cc.Class({
             dhp = -hp0;
             hp = 0;
             self.setHp(hp);
-            self.HPChange.string = -hp0;
-            self.isAlive = false;
-            var fadeout = cc.fadeOut(0.5);
-            self.node.runAction(fadeout);            
+            self.HPChange.string = dhp;
+            self.isAlive = false;          
         }
         else {
             dhp = hp - hp0;
@@ -124,13 +120,20 @@ cc.Class({
         var moveBy1 = cc.moveBy(0.05, cc.p(0.3, 0.3));
         var moveBy2 = cc.moveBy(0.05, cc.p(-0.3, -0.3));
         var seq = cc.sequence(moveBy1, moveBy2, moveBy2, moveBy1).repeat(5);
-        self.node.runAction(seq);
-        var fadeIn = cc.fadeIn(1.5).easing(cc.easeCubicActionIn());
-        var fadeout = cc.fadeOut(1.5).easing(cc.easeCubicActionOut()); 
-        var callback = cc.callFunc(function () {
+        self.node.runAction(seq);    
+
+        var fadeIn = cc.fadeIn(1).easing(cc.easeCubicActionIn());
+        var fadeout = cc.fadeOut(1).easing(cc.easeCubicActionOut()); 
+        var callback1 = cc.callFunc(function () {
             self.HPLabel.string = self.getHp();
         });
-        var seq = cc.sequence(fadeIn, callback, fadeout);
-        self.HPChange.node.runAction(seq);        
+        var callback2 = cc.callFunc(function () {
+            if (!this.isAlive) {
+                var fadeout = cc.fadeOut(0.2);
+                this.node.runAction(fadeout);     
+            }        
+        }.bind(this));        
+        var seq = cc.sequence(fadeIn, callback1, fadeout, callback2);
+        self.HPChange.node.runAction(seq);                 
     },
 });

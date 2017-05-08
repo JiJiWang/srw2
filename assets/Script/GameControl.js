@@ -1,4 +1,3 @@
-// var GameData = require('GameData');
 cc.Class({
     extends: cc.Component,
 
@@ -15,10 +14,6 @@ cc.Class({
             default: null,
             type: cc.Node
         },
-        gameMenu: {
-            default: null,
-            type: cc.Node
-        },
         robotInfo: {
             default: null,
             type: cc.Node
@@ -27,58 +22,67 @@ cc.Class({
             default: null,
             type: require('ArmInfo')
         },
+        troopsInfo: {
+            default: null,
+            type: require('TroopsInfo')
+        },        
     }),
 
-    // use this for initialization
     onLoad: function () {
         var manager = cc.director.getCollisionManager();
         manager.enabled = true;
         this.isFixed = true;
-        this.GameData.roundReset();
         this.isSelectedSth = false;
         this.gameState = this.GameData.GameState.GAME_START;
         this.selectingRobot = null;
         this.selectingEnemy = null;
-        this.node.on('GameStart:Start', function(event) {
-            this.GameData.gameStart.node.destroy();
-            this.gameState = this.GameData.GameState.NONE;
-            this.GameData.map.active = true;
-            this.gameSelector.active = true;
-            this.unfixed();                
-        }.bind(this));     
-        this.node.on('Robot:Moved', function(event) {
-            // cc.log('GameControl:Robot.Moved');
-            var robot = event.detail.robot;
-            // cc.log('robot.node.group = ' + robot.node.group);
-            if (robot.node.group == "Blue"){
-                if (this.selectingRobot.isMoved) {
-                    var menu;
-                    if (this.isAttackable(this.selectingRobot, this.GameData.enemys)) {
-                        // cc.log('isAttackable = true');
-                        menu = [
-                            [this.GameData.MenuID.ATTACK, this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE],
-                            [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
-                        ];                      
-                    }
-                    else {
-                        // cc.log('isAttackable = false');
-                        menu = [
-                            [this.GameData.MenuID.STANDBY, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE],
-                            [this.GameData.MenuID.NONE, this.GameData.MenuID.NONE, this.GameData.MenuID.NONE]
-                        ];               
-                    }
-                    this.robotMenu.emit('GameControl:ShowRobotMenu', {
-                        robot: this.selectingRobot,
-                        show: true,
-                        flag: 1,
-                        menu: menu,
-                    });                 
-                    this.gameSelector.emit('GameControl:Fixed');
-                    this.gameState = this.GameData.GameState.SHOW_ROBOT_MENU;
-                } 
-            }           
-        }.bind(this));  
-        // cc.log('this.gameState = ' + this.gameState);
+        this.GameData.roundReset();
+    },
+
+    onGameStart: function() {
+        this.GameData.gameStart.fixed();
+        this.gameState = this.GameData.GameState.NONE;
+        this.GameData.gameScene.active = true;
+        this.unfixed(); 
+    },
+
+    onGameOver: function() {
+        this.gameState = this.GameData.GameState.NONE;
+        this.fixed(); 
+        var fadeout = cc.fadeOut(2).easing(cc.easeCubicActionIn());
+        this.GameData.gameScene.runAction(fadeout);
+        this.GameData.gameOver.onGameOver();
+    },
+
+    onRobotMoved: function(robot) {
+        var self = this; 
+        if (robot.node.group == "Blue"){
+            if (self.selectingRobot.isMoved) {
+                var menu;
+                if (self.isAttackable(self.selectingRobot, self.GameData.enemys)) {
+                    // cc.log('isAttackable = true');
+                    menu = [
+                        [self.GameData.MenuID.ATTACK, self.GameData.MenuID.STANDBY, self.GameData.MenuID.NONE],
+                        [self.GameData.MenuID.NONE, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE]
+                    ];                      
+                }
+                else {
+                    // cc.log('isAttackable = false');
+                    menu = [
+                        [self.GameData.MenuID.STANDBY, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE],
+                        [self.GameData.MenuID.NONE, self.GameData.MenuID.NONE, self.GameData.MenuID.NONE]
+                    ];               
+                }
+                self.robotMenu.emit('GameControl:ShowRobotMenu', {
+                    robot: self.selectingRobot,
+                    show: true,
+                    flag: 1,
+                    menu: menu,
+                });                 
+                self.gameSelector.emit('GameControl:Fixed');
+                self.gameState = self.GameData.GameState.SHOW_ROBOT_MENU;
+            } 
+        }
     },
 
     onSelectRed: function(robot) {
@@ -112,6 +116,14 @@ cc.Class({
             this.isSelectedSth = false;
             this.gameState = this.GameData.GameState.NONE;
         }                
+    },
+
+    fixed: function() {
+        var self = this;
+        if (!self.isFixed) {
+            self.node.stopAllActions();
+            self.isFixed = true;
+        }
     },
 
     unfixed: function() {
@@ -247,7 +259,12 @@ cc.Class({
                 else {
                     self.gameState = self.GameData.GameState.NONE;
                 }                         
-                break;                                                          
+                break;  
+            case self.GameData.GameState.SHOW_TROOPS:  
+                self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
+                self.gameSelector.emit('GameControl:Unfixed');
+                self.gameState = self.GameData.GameState.NONE;            
+                break;                                                                         
         }
     },
 
@@ -383,8 +400,12 @@ cc.Class({
                     case self.GameData.MenuID.SAVE:
                         break;                        
                     case self.GameData.MenuID.TROOPS:
+                        self.troopsInfo.showTroopsInfo(self.GameData.robots, true);
+                        self.gameSelector.emit('GameControl:Fixed');
+                        self.gameState = self.GameData.GameState.SHOW_TROOPS;
                         break;                        
                     case self.GameData.MenuID.SWITCH:
+                        self.onGameOver();
                         break;                        
                     case self.GameData.MenuID.GOAL:
                         break;                        
@@ -406,9 +427,6 @@ cc.Class({
                         y: gameSelector.tiley,
                     });
                 }
-                // else {
-                //     cc.log('Out of robot maneuver range');
-                // }
                 break;            
             case self.GameData.GameState.SHOW_ROBOT_INFO:            
                 break;
@@ -446,7 +464,12 @@ cc.Class({
                 }                       
                 break;                             
             case self.GameData.GameState.ENEMY_ACTION:  
-                break;                             
+                break;      
+            case self.GameData.GameState.SHOW_TROOPS:  
+                self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
+                self.gameSelector.emit('GameControl:Unfixed');
+                self.gameState = self.GameData.GameState.NONE;            
+                break;                                          
         }
     },
 
@@ -457,7 +480,6 @@ cc.Class({
                 var dx = Math.abs(enemy.tilex - robot.tilex);
                 var dy = Math.abs(enemy.tiley - robot.tiley);
                 var ds = dx + dy;
-                // cc.log('ds = ' + ds);
                 var arm1 = robot.getArm(0);
                 if (arm1.RANGE >= ds) {
                     return true;
@@ -474,9 +496,7 @@ cc.Class({
     isMoveable: function(robot, gameSelector) {
         var dx = Math.abs(robot.tilex - gameSelector.tilex);
         var dy = Math.abs(robot.tiley - gameSelector.tiley);
-        var ds = dx + dy;
-        // cc.log('dx = ' + dx + ' , dy = ' + dy);                
-        // cc.log('gameSelector.tilex = ' + gameSelector.tilex + ' , gameSelector.tiley = ' + gameSelector.tiley);   
+        var ds = dx + dy; 
         if (ds > 0 && ds <= robot.getManeuver()) {
             return true;
         } 
@@ -484,11 +504,9 @@ cc.Class({
     },
 
     attack: function(robot, enemys, arm, gameSelector) {
-        // cc.log('gameSelector.tilex = ' + gameSelector.tilex + ', gameSelector.tiley = ' + gameSelector.tiley);
         for (var i = 0; i < enemys.length; i++) {
             var enemy = enemys[i];
             if (enemy.isAlive) {
-                // cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
                 if (enemy.tilex == gameSelector.tilex && enemy.tiley == gameSelector.tiley) {
                     enemy.injure(arm.AIR);
                     return true;
@@ -501,23 +519,24 @@ cc.Class({
     enemyAction: function(enemys, robots) {
         var self = this;
         var repeatTimes = self.GameData.enemysAvailableCount;
-        cc.log('repeatTimes = ' + repeatTimes);
-        var dt = 3;
+        // cc.log('repeatTimes = ' + repeatTimes);
+        var dt = 3.5;
         var delay = cc.delayTime(dt);
         var callback = cc.callFunc(function() {
-            // cc.log('enemys.length = ' + enemys.length);
             for (var i = 0; i < enemys.length; i++) {
                 var enemy = enemys[i];
-                // cc.log('enemy.isMoved = ' + enemy.isMoved);
+                var isNoneAlive = this.isNoneAlive(robots);
+                if (isNoneAlive) {
+                    this.onGameOver();
+                }                
+                cc.log(enemy.getRobotName() + ' ' + i);
                 if (enemy.isMoved) {
                     continue;
                 }
-                if (self.enemyAttack(enemy, robots)) {
+                if (this.enemyAttack(enemy, robots)) {
                     return;
                 }               
-                self.enemyMove(enemy, enemys, robots);
-                // cc.log('after this.enemyMove executed, enemy.isMoved = ' + enemy.isMoved);
-                // self.enemyAttack(enemy, robots); 
+                this.enemyMove(enemy, enemys, robots);
                 if (!enemy.isMoved) {
                     enemy.isMoved = true;
                     enemy.node.color = new cc.Color(160, 160, 160);                    
@@ -526,7 +545,6 @@ cc.Class({
             }
         }.bind(self));
         var seq = cc.sequence(callback, delay).repeat(repeatTimes);
-        // var seq = cc.sequence(callback, delay);
         self.node.runAction(seq);       
 
         var delay = cc.delayTime(dt * repeatTimes);
@@ -543,7 +561,6 @@ cc.Class({
         self.GameData.map.stopAllActions();
         self.GameData.map.x = -32;
         self.GameData.map.y = 120;
-        // cc.log('all enemy is moved');
         self.gameSelector.x = 8;
         self.gameSelector.y = 0;
         self.gameSelector.getComponent('GameSelector').tilex = 12;
@@ -556,14 +573,28 @@ cc.Class({
     },
 
     roundOver: function() {
-        cc.log('GameControl:roundOver');
+        // cc.log('GameControl:roundOver');
         var self = this;
         self.GameData.roundOver();
         self.gameSelector.emit('GameControl:Fixed');
         self.gameSelector.opacity = 0;         
     },
 
+    isNoneAlive: function(robots) {
+        var isNoneAlive = true;
+        for (var i = 0; i < robots.length; i++) {
+            var robot = robots[i];
+            if (robot.isAlive) {
+                isNoneAlive = false;
+                break;
+            }
+        }
+        return isNoneAlive;
+    },
+
     enemyAttack: function(enemy, robots) {
+        // cc.log('GameControl:enemyAttack');
+        var self = this;
         for (var i = 0; i < robots.length; i++) {
             var robot = robots[i];
             if (robot.isAlive) {
@@ -591,25 +622,27 @@ cc.Class({
     },
 
     enemyMove: function(enemy, enemys, robots) {
-        cc.log('enemy:enemyMove');
+        // cc.log('GameControl:enemyMove');
         var self = this;
-        var cra = new Array();//closed robot array
+        //closed robot array
+        var cra = new Array();
         for (var i = 0; i < robots.length; i++) {
-            // var robot = robots[i].getComponent('Robot');
             var robot = robots[i];
             if (robot.isAlive) {
                 var dx = Math.abs(robot.tilex - enemy.tilex);
                 var dy = Math.abs(robot.tiley - enemy.tiley);
                 var ds = dx + dy;
-                cra[i] = [i, ds];
+                cra.push([i, ds]);
             }
         }
         for (var k = 0; k < cra.length; k++) {
             for (var i = k + 1; i < cra.length; i++) {
-                var tmp = cra[i];
+                var tmp = [cra[i][0], cra[i][1]];
                 if (cra[k][1] > cra[i][1]) {
-                    cra[i] = cra[k];
-                    cra[k] = tmp;
+                    cra[i][0] = cra[k][0];
+                    cra[i][1] = cra[k][1];
+                    cra[k][0] = tmp[0];
+                    cra[k][1] = tmp[1];                    
                 }
             }
         }
@@ -618,7 +651,7 @@ cc.Class({
             if (cra[a][1] <= 1) {
                 return ;
             }            
-            cc.log('closedRobot.name = ' + closedRobot.getRobotName());
+            // cc.log('closedRobot.name = ' + closedRobot.getRobotName());
             var isBlock = [false, false, false, false];
             for (var i = 0; i < robots.length; i++) {
                 var robot = robots[i];
@@ -692,8 +725,8 @@ cc.Class({
                         if (dy != 0) {
                             sy = dy / dya;
                         }                    
-                        cc.log('sx = ' + sx + ', sy = ' + sy + ', enemy.maneuver = ' + maneuver);
-                        cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
+                        // cc.log('sx = ' + sx + ', sy = ' + sy + ', enemy.maneuver = ' + maneuver);
+                        // cc.log('enemy.tilex = ' + enemy.tilex + ', enemy.tiley = ' + enemy.tiley);
                         var pa = new Array();
                         var tilex = enemy.tilex;
                         var tiley = enemy.tiley;
@@ -705,7 +738,7 @@ cc.Class({
                                 var y = tiley + sy * j;
                                 pa[index][0] = x;
                                 pa[index][1] = y;
-                                cc.log('pa[' + index + '] = (' + x + ' , ' + y + ')');
+                                // cc.log('pa[' + index + '] = (' + x + ' , ' + y + ')');
                                 index++;
                                 if (sy == 0) {
                                     break;
@@ -759,7 +792,7 @@ cc.Class({
                                 mindi = i;
                             }                        
                         }
-                        cc.log('paAvailable.mindi = ' + mindi + ', paAvailable.minds = ' + minds);
+                        // cc.log('paAvailable.mindi = ' + mindi + ', paAvailable.minds = ' + minds);
                         if (mindi < 0) {
                             return;
                         }                    

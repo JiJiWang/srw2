@@ -40,70 +40,106 @@ cc.Class({
         });
         this.menuID = this.MenuID.START;
 
-        var PosIndex = cc.Enum({
+        this.PosIndex = cc.Enum({            
             HALF_TITLE_TOP: 0,
             HALF_TITLE_BOT: 1,
             SELECTOR_START: 2,
             SELECTOR_CONTINUE: 3,
             SELECTOR_LOAD_DATA: 4,
+            HALF_TITLE_TOP_START: 5,
+            HALF_TITLE_BOT_START: 6,            
         });
-        this.PosIndex = PosIndex;
 
-        var TitleIndex = cc.Enum({
+        this.TitleIndex = cc.Enum({
             HALF_TITLE_TOP: 0,
             HALF_TITLE_BOT: 1,
             BLUE_TITLE: 2,
         });
 
-        var x = this.pos[PosIndex.HALF_TITLE_TOP].x;
-        var y = this.pos[PosIndex.HALF_TITLE_TOP].y;
-        var pos = cc.p(x, y);
-        var moveTo = cc.moveTo(0.5, pos);
-        this.title[TitleIndex.HALF_TITLE_TOP].runAction(moveTo);
-
-        var x = this.pos[PosIndex.HALF_TITLE_BOT].x;
-        var y = this.pos[PosIndex.HALF_TITLE_BOT].y;
-        var pos = cc.p(x, y);
-        var moveTo = cc.moveTo(0.5, pos);
-        this.title[TitleIndex.HALF_TITLE_BOT].runAction(moveTo);
-
-        var delay = cc.delayTime(1);
-        var scale1 = cc.scaleTo(0.1, 1.1, 1.1);
-        var scale2 = cc.scaleTo(0.1, 1.0, 1.0);
-        var callback = cc.callFunc(function() {
-            this.opacity = 255;
-        }.bind(this.title[TitleIndex.BLUE_TITLE]));
-        var sequence = cc.sequence(delay, callback, scale1, scale2);
-        this.title[TitleIndex.BLUE_TITLE].runAction(sequence);
-
-        var delay = cc.delayTime(1);
-        var callback = cc.callFunc(function() {
-            this.opacity = 255;
-        }.bind(this.selector));
-        var sequence = cc.sequence(delay, callback);
-        this.selector.runAction(sequence);
-
-        cc.audioEngine.playEffect(this.titleMusic, false);
-
-        var delay = cc.delayTime(1);
-        var callback = cc.callFunc(function() {
-            this.unfixed();
-        }.bind(this));
-        var sequence = cc.sequence(delay, callback);
-        this.node.runAction(sequence);
+        this.onGameStart();
     },
 
     onDestroy () {
         // cc.log('GameStart:onDestroy');
     },
 
+    onGameStart: function() {
+        var self = this;
+        self.node.opacity = 255;
+
+        var PosIndex = self.PosIndex;
+        var TitleIndex = self.TitleIndex;
+
+        var x = self.pos[PosIndex.HALF_TITLE_TOP].x;
+        var y = self.pos[PosIndex.HALF_TITLE_TOP].y;
+        var pos = cc.p(x, y);
+        var moveTo = cc.moveTo(0.5, pos);
+        self.title[TitleIndex.HALF_TITLE_TOP].runAction(moveTo);
+
+        var x = self.pos[PosIndex.HALF_TITLE_BOT].x;
+        var y = self.pos[PosIndex.HALF_TITLE_BOT].y;
+        var pos = cc.p(x, y);
+        var moveTo = cc.moveTo(0.5, pos);
+        self.title[TitleIndex.HALF_TITLE_BOT].runAction(moveTo);
+
+        var delay = cc.delayTime(1);
+        var scale1 = cc.scaleTo(0.1, 1.1, 1.1);
+        var scale2 = cc.scaleTo(0.1, 1.0, 1.0);
+        var callback = cc.callFunc(function() {
+            this.opacity = 255;
+        }.bind(self.title[TitleIndex.BLUE_TITLE]));
+        var sequence = cc.sequence(delay, callback, scale1, scale2);
+        self.title[TitleIndex.BLUE_TITLE].runAction(sequence);
+
+        var delay = cc.delayTime(1);
+        var callback = cc.callFunc(function() {
+            this.opacity = 255;
+        }.bind(self.selector));
+        var sequence = cc.sequence(delay, callback);
+        self.selector.runAction(sequence);
+
+        cc.audioEngine.playEffect(self.titleMusic, false);
+
+        var delay = cc.delayTime(1);
+        var callback = cc.callFunc(function() {
+            this.unfixed();
+        }.bind(self));
+        var sequence = cc.sequence(delay, callback);
+        self.node.runAction(sequence);
+    },
+
+    fixed: function() {
+        var self = this;
+        if (!self.isFixed) {
+            var PosIndex = self.PosIndex;
+            var TitleIndex = self.TitleIndex;
+                       
+            self.node.stopAllActions();
+            self.node.opacity = 0;
+
+            self.title[TitleIndex.BLUE_TITLE].opacity = 0;
+
+            self.selector.opacity = 0;
+
+            var x = self.pos[PosIndex.HALF_TITLE_TOP_START].x;
+            var y = self.pos[PosIndex.HALF_TITLE_TOP_START].y; 
+            self.title[TitleIndex.HALF_TITLE_TOP].x = x;        
+            self.title[TitleIndex.HALF_TITLE_TOP].y = y; 
+
+            var x = self.pos[PosIndex.HALF_TITLE_BOT_START].x;
+            var y = self.pos[PosIndex.HALF_TITLE_BOT_START].y; 
+            self.title[TitleIndex.HALF_TITLE_BOT].x = x;        
+            self.title[TitleIndex.HALF_TITLE_BOT].y = y;
+
+            self.isFixed = true;
+        }
+    },
+
     unfixed: function() {
         var self = this;
         if (self.isFixed) {
-            // var keySensibility = 0.15;
-            var keySensibility = self.GameData.KeySensibility;
             var offset = self.PosIndex.SELECTOR_START - self.MenuID.START;
-            var interval = cc.delayTime(keySensibility);
+            var interval = cc.delayTime(self.GameData.KeySensibility);
             var callback = cc.callFunc(function () {
                 if (self.GameData.down) {
                     var next = self.menuID + 1;
@@ -127,8 +163,7 @@ cc.Class({
                     // cc.log('self.menuID = ' + self.menuID);
                     switch (self.menuID) {
                         case self.MenuID.START:
-                            var root = cc.find('Canvas');
-                            root.emit('GameStart:Start');
+                            self.GameData.GameControl.onGameStart();
                             break;
                         case self.MenuID.CONTINUE:
                             self.talk.getComponent(cc.Label).string = 'Current version does not support archiving'; 

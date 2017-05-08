@@ -1,13 +1,20 @@
-// var GameStart = require('GameStart');
 cc.Class({
     extends: cc.Component,
 
     properties: () => ({
         KeySensibility: 0,
+        GameControl: {
+            default: null,
+            type: require("GameControl")
+        },        
         gameStart: {
             default: null,
             type: require("GameStart")
         },
+        gameScene: {
+            default: null,
+            type: cc.Node
+        },        
         tiledMaps: {
             default: [],
             type: [cc.Node]
@@ -19,6 +26,10 @@ cc.Class({
         enemys: {
             default: [],
             type: [require("Robot")]            
+        },
+        gameOver: {
+            default: null,
+            type: require("GameOver")            
         },
     }),
 
@@ -78,6 +89,7 @@ cc.Class({
             SHOW_ARM_INFO: 10,
             ATTACK: 11,
             ENEMY_ACTION: 12,
+            SHOW_TROOPS: 13,
         });       
         this.round = 0;
         this.gold = 1000;
@@ -215,7 +227,7 @@ cc.Class({
                 NAME: '三指叉',
                 RATE: 110,
                 RANGE: 1,
-                AIR: 80,                                                                                                                                              
+                AIR: 1000,                                                                                                                                              
                 LAND: 80,                                                                                                                                              
                 SEA: 80,                                                                                                                                                                              
             },
@@ -260,8 +272,8 @@ cc.Class({
                 STRENGTH: 80,
                 DEFENCE: 40,
                 SPEED: 35,
-                HP: 400,
-                HPMAX: 400,
+                HP: 340,
+                HPMAX: 340,
                 EXP: 0,
                 EXPNEED: 30,
                 ARM: [2, 3],
