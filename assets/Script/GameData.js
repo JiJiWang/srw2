@@ -90,6 +90,10 @@ cc.Class({
             ATTACK: 11,
             ENEMY_ACTION: 12,
             SHOW_TROOPS: 13,
+            SHOW_GOAL: 14,
+            SHOW_SAVE: 15,
+            SHOW_SWITCHS: 16,
+            SHOW_TOOLS: 17,
         });       
         this.round = 0;
         this.gold = 1000;

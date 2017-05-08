@@ -29,7 +29,23 @@ cc.Class({
         troopsInfo: {
             default: null,
             type: require('TroopsInfo')
-        },        
+        },
+        goal: {
+            default: null,
+            type: require('Talk')
+        },
+        save: {
+            default: null,
+            type: require('Talk')
+        }, 
+        switchs: {
+            default: null,
+            type: require('Talk')
+        }, 
+        tools: {
+            default: null,
+            type: require('Talk')
+        },                                 
     }),
 
     onLoad: function () {
@@ -242,7 +258,27 @@ cc.Class({
                 self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
                 self.gameSelector.unfixed();
                 self.gameState = self.GameData.GameState.NONE;            
-                break;                                                                         
+                break;  
+            case self.GameData.GameState.SHOW_GOAL: 
+                self.gameSelector.unfixed();
+                self.goal.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break; 
+            case self.GameData.GameState.SHOW_SAVE: 
+                self.gameSelector.unfixed();
+                self.save.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;
+            case self.GameData.GameState.SHOW_SWITCHS: 
+                self.gameSelector.unfixed();
+                self.switchs.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;
+            case self.GameData.GameState.SHOW_TOOLS: 
+                self.gameSelector.unfixed();
+                self.tools.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;                                                                                                                                       
         }
     },
 
@@ -339,8 +375,14 @@ cc.Class({
                         self.enemyAction(self.GameData.enemys, self.GameData.robots);
                         break;                        
                     case self.GameData.MenuID.TOOLS:
+                        self.gameSelector.unfixed();
+                        self.tools.showTalk('没有工具', true);
+                        self.gameState = self.GameData.GameState.SHOW_TOOLS;                       
                         break;                        
                     case self.GameData.MenuID.SAVE:
+                        self.gameSelector.unfixed();
+                        self.save.showTalk('不能储存', true);
+                        self.gameState = self.GameData.GameState.SHOW_SAVE;                      
                         break;                        
                     case self.GameData.MenuID.TROOPS:
                         self.troopsInfo.showTroopsInfo(self.GameData.robots, true);
@@ -348,10 +390,16 @@ cc.Class({
                         self.gameState = self.GameData.GameState.SHOW_TROOPS;
                         break;                        
                     case self.GameData.MenuID.SWITCH:
-                        self.onGameOver();
+                        // self.onGameOver();
+                        self.gameSelector.unfixed();
+                        self.switchs.showTalk('强制关闭动画', true);
+                        self.gameState = self.GameData.GameState.SHOW_SWITCHS;                         
                         break;                        
                     case self.GameData.MenuID.GOAL:
-                        break;                        
+                        self.gameSelector.fixed();
+                        self.goal.showTalk('全歼敌人即胜利！', true);
+                        self.gameState = self.GameData.GameState.SHOW_GOAL;                    
+                        break;                                               
                 }
                 break;
             case self.GameData.GameState.SHOW_GAME_MENU:
@@ -398,7 +446,27 @@ cc.Class({
                 self.troopsInfo.showTroopsInfo(self.GameData.robots, false);
                 self.gameSelector.unfixed();
                 self.gameState = self.GameData.GameState.NONE;            
-                break;                                          
+                break;  
+            case self.GameData.GameState.SHOW_GOAL: 
+                self.gameSelector.unfixed();
+                self.goal.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;  
+            case self.GameData.GameState.SHOW_SAVE: 
+                self.gameSelector.unfixed();
+                self.save.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;
+            case self.GameData.GameState.SHOW_SWITCHS: 
+                self.gameSelector.unfixed();
+                self.switchs.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;
+            case self.GameData.GameState.SHOW_TOOLS: 
+                self.gameSelector.unfixed();
+                self.tools.showTalk(null, false);
+                self.gameState = self.GameData.GameState.NONE;                 
+                break;                                                                       
         }
     },
 
