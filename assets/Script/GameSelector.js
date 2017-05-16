@@ -61,10 +61,10 @@ cc.Class({
                         if (self.map.x < self.mapRightTop.x) {
                             self.map.x += 16;
                             self.node.x += 16;
-                            self.tilex += 1;
+                            // self.tilex -= 1;
                         }                        
                     }
-                    // cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
+                    cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
                 } else if (self.GameData.right) {
                     self.GameData.right = false;
                     if (self.node.x < self.borderRightTop.x  && !self.isBlockedRight) {
@@ -75,10 +75,10 @@ cc.Class({
                         if (self.map.x > self.mapLeftBottom.x) {
                             self.map.x -= 16;
                             self.node.x -= 16;
-                            self.tilex -= 1;
+                            // self.tilex += 1;
                         }
                     }
-                    // cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
+                    cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
                 }
                 if (self.GameData.down) {
                     self.GameData.down = false;
@@ -90,10 +90,10 @@ cc.Class({
                         if (self.map.y < self.mapRightTop.y) {
                             self.map.y += 16;
                             self.node.y += 16;
-                            self.tiley -= 1;
+                            // self.tiley += 1;
                         }                        
                     }
-                    // cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
+                    cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
                 } else if (self.GameData.up) {
                     self.GameData.up = false;
                     if (self.node.y < self.borderRightTop.y  && !self.isBlockedTop) {
@@ -104,10 +104,10 @@ cc.Class({
                         if (self.map.y > self.mapLeftBottom.y) {
                             self.map.y -= 16;
                             self.node.y -= 16;
-                            self.tiley += 1;
+                            // self.tiley -= 1;
                         }
                     }
-                    // cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
+                    cc.log('tilex = ' + self.tilex + ', tiley = ' + self.tiley);
                 }
                 var enemys = self.GameData.enemys;
                 var isSelectedRed = false;

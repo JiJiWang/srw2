@@ -45,7 +45,15 @@ cc.Class({
         tools: {
             default: null,
             type: require('Talk')
-        },                                 
+        },
+        blueMusic: {
+            default: null,
+            url: cc.AudioClip    
+        },  
+        redMusic: {
+            default: null,
+            url: cc.AudioClip    
+        },                                
     }),
 
     onLoad: function () {
@@ -56,6 +64,7 @@ cc.Class({
         this.gameState = this.GameData.GameState.GAME_START;
         this.selectingRobot = null;
         this.selectingEnemy = null;
+        // this.audioID = [0, 0];
         this.GameData.roundReset();
     },
 
@@ -64,11 +73,15 @@ cc.Class({
         this.gameState = this.GameData.GameState.NONE;
         this.GameData.gameScene.active = true;
         this.unfixed(); 
+        cc.audioEngine.stopAll();
+        // this.audioID[0] = cc.audioEngine.play(this.blueMusic, true, 1);
+        cc.audioEngine.play(this.blueMusic, true, 1);  
     },
 
     onGameOver: function() {
         this.gameState = this.GameData.GameState.NONE;
         this.fixed(); 
+        cc.audioEngine.stopAll();
         var fadeout = cc.fadeOut(2).easing(cc.easeCubicActionIn());
         this.GameData.gameScene.runAction(fadeout);
         this.GameData.gameOver.onGameOver();
@@ -371,7 +384,10 @@ cc.Class({
                         self.gameState = self.GameData.GameState.SELECTING_ROBOT;              
                         break;                        
                     case self.GameData.MenuID.ROUND_OVER:   
-                        self.roundOver();                   
+                        self.roundOver();
+                        cc.audioEngine.stopAll();  
+                        // self.audioID[1] = cc.audioEngine.play(self.redMusic, true, 1);
+                        cc.audioEngine.play(self.redMusic, true, 1);                   
                         self.enemyAction(self.GameData.enemys, self.GameData.robots);
                         break;                        
                     case self.GameData.MenuID.TOOLS:
@@ -547,6 +563,9 @@ cc.Class({
         var delay = cc.delayTime(dt * repeatTimes);
         var callback = cc.callFunc(function () {
             self.roundReset();
+            cc.audioEngine.stopAll();
+            // self.audioID[0] = cc.audioEngine.play(self.blueMusic, true, 1);
+            cc.audioEngine.play(self.blueMusic, true, 1);            
         }.bind(self));
         var seq = cc.sequence(delay, callback);
         self.node.runAction(seq);
@@ -574,7 +593,7 @@ cc.Class({
         var self = this;
         self.GameData.roundOver();
         self.gameSelector.fixed();
-        self.gameSelector.node.opacity = 0;         
+        self.gameSelector.node.opacity = 0;   
     },
 
     isNoneAlive: function(robots) {
@@ -797,7 +816,7 @@ cc.Class({
                         endy = paAvailable[mindi][1];                        
                     }
 
-                    var followAction = cc.follow(enemy.node, cc.rect(0, 0, 256, 240));
+                    var followAction = cc.follow(enemy.node, cc.rect(0, 0, 256 * 2, 480));
                     self.GameData.map.runAction(followAction);         
                     enemy.move(endx, endy);
                     var callback = cc.callFunc(function() {

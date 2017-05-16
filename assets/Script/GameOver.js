@@ -12,7 +12,6 @@ cc.Class({
         }, 
     }),
 
-    // use this for initialization
     onLoad: function () {
         this.isFixed = true;
         this.audioID = -1;
@@ -20,7 +19,6 @@ cc.Class({
 
     onGameOver: function() {
         var self = this;
-        // self.node.opacity = 255;
         this.audioID = cc.audioEngine.play(this.overMusic, false, 1);
 
         var fadein = cc.fadeIn(2).easing(cc.easeCubicActionIn());
